@@ -897,7 +897,7 @@ public:
 ///   DeclRefExprBits.RefersToEnclosingVariableOrCapture
 ///       Specifies when this declaration reference expression (validly)
 ///       refers to an enclosed local or a captured variable.
-class DeclRefExpr : public Expr {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DeclRefExpr : public Expr {
   /// \brief The declaration that we are referencing.
   ValueDecl *D;
 
@@ -1051,13 +1051,17 @@ public:
     if (!hasTemplateKWAndArgsInfo())
       return nullptr;
 
-    if (hasFoundDecl())
+    if (hasFoundDecl()) {
       return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-        &getInternalFoundDecl() + 1);
+          llvm::alignAddr(&getInternalFoundDecl() + 1,
+                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
+    }
 
-    if (hasQualifier())
+    if (hasQualifier()) {
       return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-        &getInternalQualifierLoc() + 1);
+          llvm::alignAddr(&getInternalQualifierLoc() + 1,
+                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
+    }
 
     return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
   }
@@ -1170,6 +1174,11 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
+// Assert objects tacked on the end of DeclRefExpr won't be misaligned.
+static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<NestedNameSpecifierLoc>::Alignment, "");
+static_assert(llvm::AlignOf<NestedNameSpecifierLoc>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "");
+// Code re-aligns before ASTTemplateKWAndArgsInfo
+static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "");
 
 /// \brief [C99 6.4.2.2] - A predefined identifier such as __func__.
 class PredefinedExpr : public Expr {
@@ -1971,6 +1980,9 @@ public:
     return child_range(begin, begin + NumExprs);
   }
 };
+// Assert objects tacked on the end of OffsetOfExpr won't be misaligned
+static_assert(llvm::AlignOf<OffsetOfExpr>::Alignment >= llvm::AlignOf<OffsetOfExpr::OffsetOfNode*>::Alignment, "");
+static_assert(llvm::AlignOf<OffsetOfExpr::OffsetOfNode>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
 
 /// UnaryExprOrTypeTraitExpr - expression with either a type or (unevaluated)
 /// expression operand.  Used for sizeof/alignof (C99 6.5.3.4) and
@@ -2301,9 +2313,10 @@ public:
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
-class MemberExpr : public Expr {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
+ public:
   /// Extra data stored in some member expressions.
-  struct MemberNameQualifier {
+  struct LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberNameQualifier {
     /// \brief The nested-name-specifier that qualifies the name, including
     /// source-location information.
     NestedNameSpecifierLoc QualifierLoc;
@@ -2313,6 +2326,7 @@ class MemberExpr : public Expr {
     DeclAccessPair FoundDecl;
   };
 
+ private:
   /// Base - the expression for the base pointer or structure references.  In
   /// X.F, this is "X".
   Stmt *Base;
@@ -2594,6 +2608,9 @@ public:
   friend class ASTReader;
   friend class ASTStmtWriter;
 };
+// Assert objects tacked on the end of MemberExpr won't be misaligned
+static_assert(llvm::AlignOf<MemberExpr>::Alignment >= llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment, "");
+static_assert(llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "");
 
 /// CompoundLiteralExpr - [C99 6.5.2.5]
 ///
@@ -2750,6 +2767,10 @@ public:
   // Iterators
   child_range children() { return child_range(&Op, &Op+1); }
 };
+// Assert objects tacked on the end of CastExpr won't be misaligned
+static_assert(llvm::AlignOf<CastExpr>::Alignment >= llvm::AlignOf<CXXBaseSpecifier *>::Alignment, "");
+// (Note that the data is actually tacked onto one of its subclasses,
+// but they'll inherit alignment)
 
 /// ImplicitCastExpr - Allows us to explicitly represent implicit type
 /// conversions, which have no direct representation in the original
@@ -4275,6 +4296,8 @@ public:
     return child_range(begin, begin + NumSubExprs);
   }
 };
+// Assert objects tacked on the end of DesignatedInitExpr won't be misaligned
+static_assert(llvm::AlignOf<DesignatedInitExpr>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "");
 
 /// \brief Represents a place-holder for an object not to be initialized by
 /// anything.
@@ -4826,6 +4849,8 @@ public:
     return T->getStmtClass() == PseudoObjectExprClass;
   }
 };
+// Assert objects tacked on the end of PseudoObjectExpr won't be misaligned
+static_assert(llvm::AlignOf<PseudoObjectExpr>::Alignment >= llvm::AlignOf<Expr *>::Alignment, "");
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,
 /// __atomic_load, __atomic_store, and __atomic_compare_exchange_*, for the

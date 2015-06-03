@@ -333,11 +333,12 @@ public:
 /// CGFunctionInfo - Class to encapsulate the information about a
 /// function definition.
 class CGFunctionInfo : public llvm::FoldingSetNode {
+ public:
   struct ArgInfo {
     CanQualType type;
     ABIArgInfo info;
   };
-
+ private:
   /// The LLVM::CallingConv to use for this function (as specified by the
   /// user).
   unsigned CallingConvention : 8;
@@ -500,6 +501,8 @@ public:
     }
   }
 };
+// Assert objects tacked on the end of CGFunctionInfo won't be misaligned
+static_assert(llvm::AlignOf<CGFunctionInfo>::Alignment >= llvm::AlignOf<CGFunctionInfo::ArgInfo>::Alignment, "");
 
 }  // end namespace CodeGen
 }  // end namespace clang

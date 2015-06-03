@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECLGROUP_H
 #define LLVM_CLANG_AST_DECLGROUP_H
 
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -51,6 +52,8 @@ public:
     return ((Decl* const*) (this+1))[i];
   }
 };
+// Assert objects tacked on the end of DeclGroup won't be misaligned
+static_assert(llvm::AlignOf<DeclGroup>::Alignment >= llvm::AlignOf<Decl*>::Alignment, "");
 
 class DeclGroupRef {
   // Note this is not a PointerIntPair because we need the address of the

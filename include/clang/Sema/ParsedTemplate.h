@@ -205,6 +205,8 @@ namespace clang {
       free(this); 
     }
   };
+  // Assert objects tacked on the end of TemplateIdAnnotation won't be misaligned
+  static_assert(llvm::AlignOf<TemplateIdAnnotation>::Alignment >= llvm::AlignOf<ParsedTemplateArgument>::Alignment, "");
 
   /// Retrieves the range of the given template parameter lists.
   SourceRange getTemplateParamsRange(TemplateParameterList const *const *Params,

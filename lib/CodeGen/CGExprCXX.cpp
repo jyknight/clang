@@ -1154,6 +1154,8 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, FPT, DeleteArgs);
     }
   };
+  // Assert objects tacked on the end of CallDeleteDuringNew won't be misaligned
+  static_assert(llvm::AlignOf<CallDeleteDuringNew>::Alignment >= llvm::AlignOf<RValue>::Alignment, "");
 
   /// A cleanup to call the given 'operator delete' function upon
   /// abnormal exit from a new expression when the new expression is
@@ -1213,6 +1215,8 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, FPT, DeleteArgs);
     }
   };
+  // Assert objects tacked on the end of CallDeleteDuringNew won't be misaligned
+  static_assert(llvm::AlignOf<CallDeleteDuringConditionalNew>::Alignment >= llvm::AlignOf<DominatingValue<RValue>::saved_type>::Alignment, "");
 }
 
 /// Enter a cleanup to call 'operator delete' if the initializer in a
@@ -1844,7 +1848,7 @@ void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
       MakeAddrLValue(Slot.getAddr(), E->getType(), Slot.getAlignment());
 
   CXXRecordDecl::field_iterator CurField = E->getLambdaClass()->field_begin();
-  for (LambdaExpr::capture_init_iterator i = E->capture_init_begin(),
+  for (LambdaExpr::const_capture_init_iterator i = E->capture_init_begin(),
                                          e = E->capture_init_end();
        i != e; ++i, ++CurField) {
     // Emit initialization

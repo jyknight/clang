@@ -70,6 +70,9 @@ namespace clang {
 /// Decl - This represents one declaration (or definition), e.g. a variable,
 /// typedef, function, struct, etc.
 ///
+/// Note: There are objects tacked on before the *beginning* of Decl
+/// (and its subclasses) in its Decl::operator new(). Proper alignment
+/// for all subclasses is asserted in DeclBase.cpp.
 class Decl {
 public:
   /// \brief Lists the kind of concrete classes of Decl.

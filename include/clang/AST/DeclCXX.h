@@ -2133,6 +2133,8 @@ public:
   /// \brief Get the initializer.
   Expr *getInit() const { return static_cast<Expr*>(Init); }
 };
+// Assert objects tacked on the end of CXXCtorInitializer won't be misaligned
+static_assert(llvm::AlignOf<CXXCtorInitializer>::Alignment >= llvm::AlignOf<VarDecl*>::Alignment, "");
 
 /// \brief Represents a C++ constructor within a class.
 ///

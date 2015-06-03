@@ -138,10 +138,10 @@ private:
 
   /// Arguments, if any, are stored immediately following the object.
   ArgsUnion *getArgsBuffer() {
-    return reinterpret_cast<ArgsUnion*>(this+1);
+    return reinterpret_cast<ArgsUnion*>(this + 1);
   }
   ArgsUnion const *getArgsBuffer() const {
-    return reinterpret_cast<ArgsUnion const *>(this+1);
+    return reinterpret_cast<ArgsUnion const *>(this + 1);
   }
 
   enum AvailabilitySlot {
@@ -476,6 +476,13 @@ public:
   /// a Spelling enumeration, the value UINT_MAX is returned.
   unsigned getSemanticSpelling() const;
 };
+// Assert objects tacked on the end of AttributeList won't be misaligned.
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ArgsUnion>::Alignment, "");
+static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AvailabilityChange>::Alignment, "");
+static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AttributeList::TypeTagForDatatypeData>::Alignment, "");
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ParsedType>::Alignment, "");
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<AttributeList::PropertyData>::Alignment, "");
+
 
 /// A factory, from which one makes pools, from which one creates
 /// individual attributes which are deallocated with the pool.
@@ -537,6 +544,7 @@ public:
   AttributeFactory();
   ~AttributeFactory();
 };
+
 
 class AttributePool {
   AttributeFactory &Factory;

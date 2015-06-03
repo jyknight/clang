@@ -393,6 +393,9 @@ public:
     Profile(ID, keyword_begin(), getNumArgs());
   }
 };
+// Assert objects tacked on the end of MultiKeywordSelector won't be misaligned
+static_assert(llvm::AlignOf<MultiKeywordSelector>::Alignment >= llvm::AlignOf<IdentifierInfo *>::Alignment, "");
+
 } // end namespace clang.
 
 unsigned Selector::getNumArgs() const {

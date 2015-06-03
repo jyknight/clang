@@ -118,6 +118,8 @@ public:
 
   friend class ASTStmtReader;
 };
+// Assert objects tacked on the end of CXXTryStmt won't be misaligned
+static_assert(llvm::AlignOf<CXXTryStmt>::Alignment >= llvm::AlignOf<Stmt*>::Alignment, "");
 
 /// CXXForRangeStmt - This represents C++0x [stmt.ranged]'s ranged for
 /// statement, represented as 'for (range-declarator : range-expression)'.

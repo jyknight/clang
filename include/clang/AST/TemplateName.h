@@ -108,6 +108,8 @@ public:
   iterator begin() const { return getStorage(); }
   iterator end() const { return getStorage() + size(); }
 };
+// Assert objects tacked on the end of OverloadedTemplateStorage won't be misaligned
+static_assert(llvm::AlignOf<OverloadedTemplateStorage>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "");
 
 /// \brief A structure for storing an already-substituted template template
 /// parameter pack.

@@ -201,6 +201,8 @@ public:
     
   friend class ASTStmtReader;
 };
+// Assert objects tacked on the end of ObjCArrayLiteral won't be misaligned
+static_assert(llvm::AlignOf<ObjCArrayLiteral>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
 
 /// \brief An element in an Objective-C dictionary literal.
 ///
@@ -231,6 +233,7 @@ namespace clang {
 /// ObjCDictionaryLiteral - AST node to represent objective-c dictionary 
 /// literals; as in:  @{@"name" : NSUserName(), @"date" : [NSDate date] };
 class ObjCDictionaryLiteral : public Expr {
+ public:
   /// \brief Key/value pair used to store the key and value of a given element.
   ///
   /// Objects of this type are stored directly after the expression.
@@ -251,6 +254,7 @@ class ObjCDictionaryLiteral : public Expr {
     unsigned NumExpansionsPlusOne;
   };
 
+ private:
   /// \brief The number of elements in this dictionary literal.
   unsigned NumElements : 31;
   
@@ -341,6 +345,7 @@ public:
   child_range children() { 
     // Note: we're taking advantage of the layout of the KeyValuePair struct
     // here. If that struct changes, this code will need to change as well.
+    static_assert(sizeof(KeyValuePair) == sizeof(Stmt *) * 2, "");
     return child_range(reinterpret_cast<Stmt **>(this + 1),
                        reinterpret_cast<Stmt **>(this + 1) + NumElements * 2);
   }
@@ -348,6 +353,9 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
+// Assert objects tacked on the end of ObjCDictionaryLiteral won't be misaligned
+static_assert(llvm::AlignOf<ObjCDictionaryLiteral>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment, "");
+static_assert(llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::ExpansionData>::Alignment, "");
 
 
 /// ObjCEncodeExpr, used for \@encode in Objective-C.  \@encode has the same
@@ -1364,6 +1372,10 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
+// Assert objects tacked on the end of ObjCMessageExpr won't be misaligned
+static_assert(llvm::AlignOf<ObjCMessageExpr>::Alignment >= llvm::AlignOf<void*>::Alignment, "");
+static_assert(llvm::AlignOf<void*>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
+static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
 
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.
 /// (similar in spirit to MemberExpr).

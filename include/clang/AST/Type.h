@@ -3115,11 +3115,13 @@ private:
     assert(hasAnyConsumedParams());
 
     // Find the end of the exceptions.
-    Expr *const *eh_end = reinterpret_cast<Expr *const *>(param_type_end());
-    if (getExceptionSpecType() != EST_ComputedNoexcept)
-      eh_end += NumExceptions;
-    else
+    Expr *const *eh_end = reinterpret_cast<Expr *const *>(exception_end());
+    if (getExceptionSpecType() == EST_ComputedNoexcept)
       eh_end += 1; // NoexceptExpr
+    // The memory layout of these types isn't handled here, so
+    // hopefully this is never called for them?
+    assert(getExceptionSpecType() != EST_Uninstantiated &&
+           getExceptionSpecType() != EST_Unevaluated);
 
     return reinterpret_cast<const bool*>(eh_end);
   }
@@ -3291,7 +3293,15 @@ public:
                       param_type_iterator ArgTys, unsigned NumArgs,
                       const ExtProtoInfo &EPI, const ASTContext &Context);
 };
-
+// Assert objects tacked on the end of FunctionProtoType won't be misaligned
+static_assert(llvm::AlignOf<FunctionProtoType>::Alignment >= llvm::AlignOf<QualType>::Alignment, "");
+// After QualType[], there can be one of 4 options: more QualType, Expr*, 2x FunctionDecl*, FunctionDecl*
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<FunctionDecl*>::Alignment, "");
+// And then, after any of those options, comes bool[]
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<bool>::Alignment, "");
+static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<bool>::Alignment, "");
+static_assert(llvm::AlignOf<FunctionDecl*>::Alignment >= llvm::AlignOf<bool>::Alignment, "");
 
 /// \brief Represents the dependent type named by a dependently-scoped
 /// typename using declaration, e.g.
@@ -3933,7 +3943,7 @@ public:
 /// TemplateArguments, followed by a QualType representing the
 /// non-canonical aliased type when the template is a type alias
 /// template.
-class TemplateSpecializationType
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
   /// \brief The name of the template being specialized.  This is
   /// either a TemplateName::Template (in which case it is a
@@ -4056,6 +4066,10 @@ public:
     return T->getTypeClass() == TemplateSpecialization;
   }
 };
+// Assert objects tacked on the end of TemplateSpecializationType won't be misaligned
+// static_assert(llvm::AlignOf<TemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
+// static_assert(llvm::AlignOf<TemplateArgument>::Alignment >= llvm::AlignOf<QualType>::Alignment, "");
+// ^ Moved after class TemplateArgument, as it is is forward declared here.
 
 /// \brief The injected class name of a C++ class template or class
 /// template partial specialization.  Used to record that a type was
@@ -4331,7 +4345,7 @@ public:
 /// DependentTemplateSpecializationType - Represents a template
 /// specialization type whose template cannot be resolved, e.g.
 ///   A<T>::template B<T>
-class DependentTemplateSpecializationType :
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentTemplateSpecializationType :
   public TypeWithKeyword, public llvm::FoldingSetNode {
 
   /// \brief The nested name specifier containing the qualifier.
@@ -4397,6 +4411,9 @@ public:
     return T->getTypeClass() == DependentTemplateSpecialization;
   }
 };
+// Assert objects tacked on the end of DependentTemplateSpecializationType won't be misaligned
+// static_assert(llvm::AlignOf<DependentTemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
+// ^ Moved after class TemplateArgument, as it is is forward declared here.
 
 /// \brief Represents a pack expansion of types.
 ///
@@ -4693,6 +4710,8 @@ public:
                       ArrayRef<ObjCProtocolDecl *> protocols,
                       bool isKindOf);
 };
+// Assert objects tacked on the end of ObjCObjectTypeImpl won't be misaligned
+static_assert(llvm::AlignOf<ObjCObjectTypeImpl>::Alignment >= llvm::AlignOf<ObjCProtocolDecl*>::Alignment, "");
 
 inline QualType *ObjCObjectType::getTypeArgStorage() {
   return reinterpret_cast<QualType *>(static_cast<ObjCObjectTypeImpl*>(this)+1);

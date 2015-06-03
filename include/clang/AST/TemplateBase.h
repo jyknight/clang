@@ -360,6 +360,13 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context) const;
 };
 
+// Assert objects tacked on the end of TemplateSpecializationType won't be misaligned
+static_assert(llvm::AlignOf<TemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateArgument>::Alignment >= llvm::AlignOf<QualType>::Alignment, "");
+
+// Assert objects tacked on the end of DependentTemplateSpecializationType won't be misaligned
+static_assert(llvm::AlignOf<DependentTemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
+
 /// Location information for a TemplateArgument.
 struct TemplateArgumentLocInfo {
 private:
@@ -604,6 +611,9 @@ struct ASTTemplateArgumentListInfo {
   void copyInto(TemplateArgumentListInfo &List) const;
   static std::size_t sizeFor(unsigned NumTemplateArgs);
 };
+// Assert objects tacked on the end of ASTTemplateArgumentListInfo won't be misaligned
+static_assert(llvm::AlignOf<ASTTemplateArgumentListInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
+
 
 /// \brief Extends ASTTemplateArgumentListInfo with the source location
 /// information for the template keyword; this is used as part of the
@@ -640,6 +650,10 @@ struct ASTTemplateKWAndArgsInfo : public ASTTemplateArgumentListInfo {
 
   static std::size_t sizeFor(unsigned NumTemplateArgs);
 };
+// Assert objects tacked on the end of ASTTemplateKWAndArgsInfo won't be misaligned
+static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
+static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
 
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     const TemplateArgument &Arg);

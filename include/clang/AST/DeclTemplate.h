@@ -43,7 +43,7 @@ typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes.
-class TemplateParameterList {
+class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList {
   /// The location of the 'template' keyword.
   SourceLocation TemplateLoc;
 
@@ -131,6 +131,8 @@ public:
     return SourceRange(TemplateLoc, RAngleLoc);
   }
 };
+// Assert objects tacked on the end of TemplateParameterList won't be misaligned
+static_assert(llvm::AlignOf<TemplateParameterList>::Alignment >= llvm::AlignOf<NamedDecl*>::Alignment, "");
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes. Suitable for creating on the stack.
@@ -542,27 +544,18 @@ public:
 ///     friend void foo<>(T);
 ///   };
 /// \endcode
-class DependentFunctionTemplateSpecializationInfo {
-  struct CA {
-    /// The number of potential template candidates.
-    unsigned NumTemplates;
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializationInfo {
+  /// The number of potential template candidates.
+  unsigned NumTemplates;
 
-    /// The number of template arguments.
-    unsigned NumArgs;
-  };
-
-  union {
-    // Force sizeof to be a multiple of sizeof(void*) so that the
-    // trailing data is aligned.
-    void *Aligner;
-    struct CA d;
-  };
+  /// The number of template arguments.
+  unsigned NumArgs;
 
   /// The locations of the left and right angle brackets.
   SourceRange AngleLocs;
 
   FunctionTemplateDecl * const *getTemplates() const {
-    return reinterpret_cast<FunctionTemplateDecl*const*>(this+1);
+    return reinterpret_cast<FunctionTemplateDecl*const*>(&getTemplateArgs()[NumArgs]);
   }
 
 public:
@@ -573,7 +566,7 @@ public:
   /// \brief Returns the number of function templates that this might
   /// be a specialization of.
   unsigned getNumTemplates() const {
-    return d.NumTemplates;
+    return NumTemplates;
   }
 
   /// \brief Returns the i'th template candidate.
@@ -584,13 +577,12 @@ public:
 
   /// \brief Returns the explicit template arguments that were given.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgumentLoc*>(
-                                            &getTemplates()[getNumTemplates()]);
+    return reinterpret_cast<const TemplateArgumentLoc*>(this + 1);
   }
 
   /// \brief Returns the number of explicit template arguments that were given.
   unsigned getNumTemplateArgs() const {
-    return d.NumArgs;
+    return NumArgs;
   }
 
   /// \brief Returns the nth template argument.
@@ -607,6 +599,11 @@ public:
     return AngleLocs.getEnd();
   }
 };
+// Assert objects tacked on the end of DependentFunctionTemplateSpecializationInfo won't be misaligned.
+static_assert(llvm::AlignOf<DependentFunctionTemplateSpecializationInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<FunctionTemplateDecl*>::Alignment, "");
+
+
 
 /// Declaration of a redeclarable template.
 class RedeclarableTemplateDecl : public TemplateDecl, 
@@ -1290,6 +1287,8 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == NonTypeTemplateParm; }
 };
+// Assert objects tacked on the end of NonTypeTemplateParmDecl won't be misaligned
+static_assert(llvm::AlignOf<NonTypeTemplateParmDecl>::Alignment >= llvm::AlignOf<void*>::Alignment, "");
 
 /// TemplateTemplateParmDecl - Declares a template template parameter,
 /// e.g., "T" in
@@ -1455,6 +1454,8 @@ public:
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
+// Assert objects tacked on the end of TemplateTemplateParmDecl won't be misaligned
+static_assert(llvm::AlignOf<TemplateTemplateParmDecl>::Alignment >= llvm::AlignOf<TemplateParameterList*>::Alignment, "");
 
 /// \brief Represents a class template specialization, which refers to
 /// a class template with a given set of template arguments.
