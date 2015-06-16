@@ -875,8 +875,7 @@ public:
     return T->getStmtClass() == AttributedStmtClass;
   }
 };
-// Assert objects tacked on the end of AttributedStmt won't be misaligned
-static_assert(llvm::AlignOf<AttributedStmt>::Alignment >= llvm::AlignOf<Attr*>::Alignment, "");
+static_assert(llvm::AlignOf<AttributedStmt>::Alignment >= llvm::AlignOf<Attr*>::Alignment, "Alignment sufficient for objects appended to AttributedStmt");
 
 
 /// IfStmt - This represents an if/then/else.
@@ -2217,10 +2216,9 @@ public:
 
   friend class ASTStmtReader;
 };
-// Assert objects tacked on the end of CapturedStmt won't be misaligned
-static_assert(llvm::AlignOf<CapturedStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "");
+static_assert(llvm::AlignOf<CapturedStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "Alignment sufficient for objects appended to CapturedStmt");
 // Code re-aligns before Capture[]
-static_assert(llvm::AlignOf<CapturedStmt>::Alignment >= llvm::AlignOf<CapturedStmt::Capture>::Alignment, "");
+static_assert(llvm::AlignOf<CapturedStmt>::Alignment >= llvm::AlignOf<CapturedStmt::Capture>::Alignment, "Alignment sufficient for objects appended to CapturedStmt");
 
 }  // end namespace clang
 

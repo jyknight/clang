@@ -45,8 +45,7 @@ void Decl::updateOutOfDate(IdentifierInfo &II) const {
   getASTContext().getExternalSource()->updateOutOfDateIdentifier(II);
 }
 
-// Assert objects tacked on the end of all Decl subclasses won't be misaligned by Decl::operator new().
-#define DECL(DERIVED, BASE) static_assert(llvm::AlignOf<uint64_t>::Alignment >= llvm::AlignOf<DERIVED##Decl>::Alignment, "");
+#define DECL(DERIVED, BASE) static_assert(llvm::AlignOf<uint64_t>::Alignment >= llvm::AlignOf<DERIVED##Decl>::Alignment, "Alignment sufficient for objects appended to all Decl subclasses");
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
 

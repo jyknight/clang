@@ -201,8 +201,7 @@ public:
     
   friend class ASTStmtReader;
 };
-// Assert objects tacked on the end of ObjCArrayLiteral won't be misaligned
-static_assert(llvm::AlignOf<ObjCArrayLiteral>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
+static_assert(llvm::AlignOf<ObjCArrayLiteral>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment sufficient for objects appended to ObjCArrayLiteral");
 
 /// \brief An element in an Objective-C dictionary literal.
 ///
@@ -353,9 +352,8 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-// Assert objects tacked on the end of ObjCDictionaryLiteral won't be misaligned
-static_assert(llvm::AlignOf<ObjCDictionaryLiteral>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment, "");
-static_assert(llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::ExpansionData>::Alignment, "");
+static_assert(llvm::AlignOf<ObjCDictionaryLiteral>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment, "Alignment sufficient for objects appended to ObjCDictionaryLiteral");
+static_assert(llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::ExpansionData>::Alignment, "Alignment sufficient for objects appended to ObjCDictionaryLiteral");
 
 
 /// ObjCEncodeExpr, used for \@encode in Objective-C.  \@encode has the same
@@ -1372,10 +1370,9 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-// Assert objects tacked on the end of ObjCMessageExpr won't be misaligned
-static_assert(llvm::AlignOf<ObjCMessageExpr>::Alignment >= llvm::AlignOf<void*>::Alignment, "");
-static_assert(llvm::AlignOf<void*>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
-static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
+static_assert(llvm::AlignOf<ObjCMessageExpr>::Alignment >= llvm::AlignOf<void*>::Alignment, "Alignment sufficient for objects appended to ObjCMessageExpr");
+static_assert(llvm::AlignOf<void*>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment sufficient for objects appended to ObjCMessageExpr");
+static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "Alignment sufficient for objects appended to ObjCMessageExpr");
 
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.
 /// (similar in spirit to MemberExpr).

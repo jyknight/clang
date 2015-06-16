@@ -52,8 +52,7 @@ public:
     return ((Decl* const*) (this+1))[i];
   }
 };
-// Assert objects tacked on the end of DeclGroup won't be misaligned
-static_assert(llvm::AlignOf<DeclGroup>::Alignment >= llvm::AlignOf<Decl*>::Alignment, "");
+static_assert(llvm::AlignOf<DeclGroup>::Alignment >= llvm::AlignOf<Decl*>::Alignment, "Alignment sufficient for objects appended to DeclGroup");
 
 class DeclGroupRef {
   // Note this is not a PointerIntPair because we need the address of the

@@ -131,8 +131,7 @@ public:
     return SourceRange(TemplateLoc, RAngleLoc);
   }
 };
-// Assert objects tacked on the end of TemplateParameterList won't be misaligned
-static_assert(llvm::AlignOf<TemplateParameterList>::Alignment >= llvm::AlignOf<NamedDecl*>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateParameterList>::Alignment >= llvm::AlignOf<NamedDecl*>::Alignment, "Alignment sufficient for objects appended to TemplateParameterList");
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes. Suitable for creating on the stack.
@@ -599,9 +598,8 @@ public:
     return AngleLocs.getEnd();
   }
 };
-// Assert objects tacked on the end of DependentFunctionTemplateSpecializationInfo won't be misaligned.
-static_assert(llvm::AlignOf<DependentFunctionTemplateSpecializationInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
-static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<FunctionTemplateDecl*>::Alignment, "");
+static_assert(llvm::AlignOf<DependentFunctionTemplateSpecializationInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "Alignment sufficient for objects appended to DependentFunctionTemplateSpecializationInfo");
+static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<FunctionTemplateDecl*>::Alignment, "Alignment sufficient for objects appended to DependentFunctionTemplateSpecializationInfo");
 
 
 
@@ -1287,8 +1285,7 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == NonTypeTemplateParm; }
 };
-// Assert objects tacked on the end of NonTypeTemplateParmDecl won't be misaligned
-static_assert(llvm::AlignOf<NonTypeTemplateParmDecl>::Alignment >= llvm::AlignOf<void*>::Alignment, "");
+static_assert(llvm::AlignOf<NonTypeTemplateParmDecl>::Alignment >= llvm::AlignOf<void*>::Alignment, "Alignment sufficient for objects appended to NonTypeTemplateParmDecl");
 
 /// TemplateTemplateParmDecl - Declares a template template parameter,
 /// e.g., "T" in
@@ -1454,8 +1451,7 @@ public:
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
-// Assert objects tacked on the end of TemplateTemplateParmDecl won't be misaligned
-static_assert(llvm::AlignOf<TemplateTemplateParmDecl>::Alignment >= llvm::AlignOf<TemplateParameterList*>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateTemplateParmDecl>::Alignment >= llvm::AlignOf<TemplateParameterList*>::Alignment, "Alignment sufficient for objects appended to TemplateTemplateParmDecl");
 
 /// \brief Represents a class template specialization, which refers to
 /// a class template with a given set of template arguments.

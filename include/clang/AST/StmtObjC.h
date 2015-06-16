@@ -250,8 +250,7 @@ public:
                        getStmts() + 1 + NumCatchStmts + HasFinally);
   }
 };
-// Assert objects tacked on the end of ObjCAtTryStmt won't be misaligned
-static_assert(llvm::AlignOf<ObjCAtTryStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "");
+static_assert(llvm::AlignOf<ObjCAtTryStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "Alignment sufficient for objects appended to ObjCAtTryStmt");
 
 /// \brief Represents Objective-C's \@synchronized statement.
 ///

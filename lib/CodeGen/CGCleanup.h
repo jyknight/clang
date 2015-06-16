@@ -214,8 +214,7 @@ public:
     return Scope->getKind() == Catch;
   }
 };
-// Assert objects tacked on the end of EHCatchScope won't be misaligned
-static_assert(llvm::AlignOf<EHCatchScope>::Alignment >= llvm::AlignOf<EHCatchScope::Handler*>::Alignment, "");
+static_assert(llvm::AlignOf<EHCatchScope>::Alignment >= llvm::AlignOf<EHCatchScope::Handler*>::Alignment, "Alignment sufficient for objects appended to EHCatchScope");
 
 /// A cleanup scope which generates the cleanup blocks lazily.
 class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) EHCleanupScope : public EHScope {
@@ -447,8 +446,7 @@ public:
     return scope->getKind() == Filter;
   }
 };
-// Assert objects tacked on the end of EHFilterScope won't be misaligned
-static_assert(llvm::AlignOf<EHFilterScope>::Alignment >= llvm::AlignOf<llvm::Value*>::Alignment, "");
+static_assert(llvm::AlignOf<EHFilterScope>::Alignment >= llvm::AlignOf<llvm::Value*>::Alignment, "Alignment sufficient for objects appended to EHFilterScope");
 
 /// An exceptions scope which calls std::terminate if any exception
 /// reaches it.

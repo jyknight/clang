@@ -360,12 +360,10 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context) const;
 };
 
-// Assert objects tacked on the end of TemplateSpecializationType won't be misaligned
-static_assert(llvm::AlignOf<TemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
-static_assert(llvm::AlignOf<TemplateArgument>::Alignment >= llvm::AlignOf<QualType>::Alignment, "");
+static_assert(llvm::AlignOf<TemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "Alignment sufficient for objects appended to TemplateSpecializationType");
+static_assert(llvm::AlignOf<TemplateArgument>::Alignment >= llvm::AlignOf<QualType>::Alignment, "Alignment sufficient for objects appended to TemplateSpecializationType");
 
-// Assert objects tacked on the end of DependentTemplateSpecializationType won't be misaligned
-static_assert(llvm::AlignOf<DependentTemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
+static_assert(llvm::AlignOf<DependentTemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "Alignment sufficient for objects appended to DependentTemplateSpecializationType");
 
 /// Location information for a TemplateArgument.
 struct TemplateArgumentLocInfo {
@@ -611,8 +609,7 @@ struct ASTTemplateArgumentListInfo {
   void copyInto(TemplateArgumentListInfo &List) const;
   static std::size_t sizeFor(unsigned NumTemplateArgs);
 };
-// Assert objects tacked on the end of ASTTemplateArgumentListInfo won't be misaligned
-static_assert(llvm::AlignOf<ASTTemplateArgumentListInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
+static_assert(llvm::AlignOf<ASTTemplateArgumentListInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "Alignment sufficient for objects appended to ASTTemplateArgumentListInfo");
 
 
 /// \brief Extends ASTTemplateArgumentListInfo with the source location
@@ -650,10 +647,9 @@ struct ASTTemplateKWAndArgsInfo : public ASTTemplateArgumentListInfo {
 
   static std::size_t sizeFor(unsigned NumTemplateArgs);
 };
-// Assert objects tacked on the end of ASTTemplateKWAndArgsInfo won't be misaligned
-static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "");
-static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
-static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "");
+static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<TemplateArgumentLoc>::Alignment, "Alignment sufficient for objects appended to ASTTemplateKWAndArgsInfo");
+static_assert(llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "Alignment sufficient for objects appended to ASTTemplateKWAndArgsInfo");
+static_assert(llvm::AlignOf<TemplateArgumentLoc>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "Alignment sufficient for objects appended to ASTTemplateKWAndArgsInfo");
 
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     const TemplateArgument &Arg);

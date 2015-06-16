@@ -476,12 +476,11 @@ public:
   /// a Spelling enumeration, the value UINT_MAX is returned.
   unsigned getSemanticSpelling() const;
 };
-// Assert objects tacked on the end of AttributeList won't be misaligned.
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ArgsUnion>::Alignment, "");
-static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AvailabilityChange>::Alignment, "");
-static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AttributeList::TypeTagForDatatypeData>::Alignment, "");
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ParsedType>::Alignment, "");
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<AttributeList::PropertyData>::Alignment, "");
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ArgsUnion>::Alignment, "Alignment sufficient for objects appended to AttributeList");
+static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AvailabilityChange>::Alignment, "Alignment sufficient for objects appended to AttributeList");
+static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AttributeList::TypeTagForDatatypeData>::Alignment, "Alignment sufficient for objects appended to AttributeList");
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ParsedType>::Alignment, "Alignment sufficient for objects appended to AttributeList");
+static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<AttributeList::PropertyData>::Alignment, "Alignment sufficient for objects appended to AttributeList");
 
 
 /// A factory, from which one makes pools, from which one creates

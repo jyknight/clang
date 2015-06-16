@@ -121,8 +121,7 @@ public:
   /// its freelist.
   MacroArgs *deallocate();
 };
-// Assert objects tacked on the end of MacroArgs won't be misaligned
-static_assert(llvm::AlignOf<MacroArgs>::Alignment >= llvm::AlignOf<Token>::Alignment, "");
+static_assert(llvm::AlignOf<MacroArgs>::Alignment >= llvm::AlignOf<Token>::Alignment, "Alignment sufficient for objects appended to MacroArgs");
 
 }  // end namespace clang
 

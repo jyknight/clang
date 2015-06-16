@@ -1174,11 +1174,10 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-// Assert objects tacked on the end of DeclRefExpr won't be misaligned.
-static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<NestedNameSpecifierLoc>::Alignment, "");
-static_assert(llvm::AlignOf<NestedNameSpecifierLoc>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "");
+static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<NestedNameSpecifierLoc>::Alignment, "Alignment sufficient for objects appended to DeclRefExpr");
+static_assert(llvm::AlignOf<NestedNameSpecifierLoc>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "Alignment sufficient for objects appended to DeclRefExpr");
 // Code re-aligns before ASTTemplateKWAndArgsInfo
-static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "");
+static_assert(llvm::AlignOf<DeclRefExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment sufficient for objects appended to DeclRefExpr");
 
 /// \brief [C99 6.4.2.2] - A predefined identifier such as __func__.
 class PredefinedExpr : public Expr {
@@ -1980,9 +1979,8 @@ public:
     return child_range(begin, begin + NumExprs);
   }
 };
-// Assert objects tacked on the end of OffsetOfExpr won't be misaligned
-static_assert(llvm::AlignOf<OffsetOfExpr>::Alignment >= llvm::AlignOf<OffsetOfExpr::OffsetOfNode*>::Alignment, "");
-static_assert(llvm::AlignOf<OffsetOfExpr::OffsetOfNode>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "");
+static_assert(llvm::AlignOf<OffsetOfExpr>::Alignment >= llvm::AlignOf<OffsetOfExpr::OffsetOfNode*>::Alignment, "Alignment sufficient for objects appended to OffsetOfExpr");
+static_assert(llvm::AlignOf<OffsetOfExpr::OffsetOfNode>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment sufficient for objects appended to OffsetOfExpr");
 
 /// UnaryExprOrTypeTraitExpr - expression with either a type or (unevaluated)
 /// expression operand.  Used for sizeof/alignof (C99 6.5.3.4) and
@@ -2608,9 +2606,8 @@ public:
   friend class ASTReader;
   friend class ASTStmtWriter;
 };
-// Assert objects tacked on the end of MemberExpr won't be misaligned
-static_assert(llvm::AlignOf<MemberExpr>::Alignment >= llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment, "");
-static_assert(llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "");
+static_assert(llvm::AlignOf<MemberExpr>::Alignment >= llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment, "Alignment sufficient for objects appended to MemberExpr");
+static_assert(llvm::AlignOf<MemberExpr::MemberNameQualifier>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment sufficient for objects appended to MemberExpr");
 
 /// CompoundLiteralExpr - [C99 6.5.2.5]
 ///
@@ -2767,8 +2764,7 @@ public:
   // Iterators
   child_range children() { return child_range(&Op, &Op+1); }
 };
-// Assert objects tacked on the end of CastExpr won't be misaligned
-static_assert(llvm::AlignOf<CastExpr>::Alignment >= llvm::AlignOf<CXXBaseSpecifier *>::Alignment, "");
+static_assert(llvm::AlignOf<CastExpr>::Alignment >= llvm::AlignOf<CXXBaseSpecifier *>::Alignment, "Alignment sufficient for objects appended to CastExpr");
 // (Note that the data is actually tacked onto one of its subclasses,
 // but they'll inherit alignment)
 
@@ -4296,8 +4292,7 @@ public:
     return child_range(begin, begin + NumSubExprs);
   }
 };
-// Assert objects tacked on the end of DesignatedInitExpr won't be misaligned
-static_assert(llvm::AlignOf<DesignatedInitExpr>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "");
+static_assert(llvm::AlignOf<DesignatedInitExpr>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "Alignment sufficient for objects appended to DesignatedInitExpr");
 
 /// \brief Represents a place-holder for an object not to be initialized by
 /// anything.
@@ -4849,8 +4844,7 @@ public:
     return T->getStmtClass() == PseudoObjectExprClass;
   }
 };
-// Assert objects tacked on the end of PseudoObjectExpr won't be misaligned
-static_assert(llvm::AlignOf<PseudoObjectExpr>::Alignment >= llvm::AlignOf<Expr *>::Alignment, "");
+static_assert(llvm::AlignOf<PseudoObjectExpr>::Alignment >= llvm::AlignOf<Expr *>::Alignment, "Alignment sufficient for objects appended to PseudoObjectExpr");
 
 /// AtomicExpr - Variadic atomic builtins: __atomic_exchange, __atomic_fetch_*,
 /// __atomic_load, __atomic_store, and __atomic_compare_exchange_*, for the

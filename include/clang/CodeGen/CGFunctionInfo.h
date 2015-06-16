@@ -501,8 +501,7 @@ public:
     }
   }
 };
-// Assert objects tacked on the end of CGFunctionInfo won't be misaligned
-static_assert(llvm::AlignOf<CGFunctionInfo>::Alignment >= llvm::AlignOf<CGFunctionInfo::ArgInfo>::Alignment, "");
+static_assert(llvm::AlignOf<CGFunctionInfo>::Alignment >= llvm::AlignOf<CGFunctionInfo::ArgInfo>::Alignment, "Alignment sufficient for objects appended to CGFunctionInfo");
 
 }  // end namespace CodeGen
 }  // end namespace clang
