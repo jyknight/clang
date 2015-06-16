@@ -250,7 +250,7 @@ private:
   SmallVector<BranchFixup, 8> BranchFixups;
 
   char *allocate(size_t Size);
-  void unallocate(size_t Size);
+  void deallocate(size_t Size);
 
   void *pushCleanup(CleanupKind K, size_t DataSize);
 

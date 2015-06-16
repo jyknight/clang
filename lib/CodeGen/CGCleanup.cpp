@@ -126,7 +126,7 @@ char *EHScopeStack::allocate(size_t Size) {
   return StartOfData;
 }
 
-void EHScopeStack::unallocate(size_t Size) {
+void EHScopeStack::deallocate(size_t Size) {
   StartOfData += llvm::RoundUpToAlignment(Size, ScopeStackAlignment);
 }
 
@@ -198,7 +198,7 @@ void EHScopeStack::popCleanup() {
   EHCleanupScope &Cleanup = cast<EHCleanupScope>(*begin());
   InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
   InnermostEHScope = Cleanup.getEnclosingEHScope();
-  unallocate(Cleanup.getAllocatedSize());
+  deallocate(Cleanup.getAllocatedSize());
 
   // Destroy the cleanup.
   Cleanup.Destroy();
@@ -228,7 +228,7 @@ void EHScopeStack::popFilter() {
   assert(!empty() && "popping exception stack when not empty");
 
   EHFilterScope &filter = cast<EHFilterScope>(*begin());
-  unallocate(EHFilterScope::getSizeForNumFilters(filter.getNumFilters()));
+  deallocate(EHFilterScope::getSizeForNumFilters(filter.getNumFilters()));
 
   InnermostEHScope = filter.getEnclosingEHScope();
 }

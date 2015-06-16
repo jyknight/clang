@@ -4066,10 +4066,10 @@ public:
     return T->getTypeClass() == TemplateSpecialization;
   }
 };
-// Assert objects tacked on the end of TemplateSpecializationType won't be misaligned
-// static_assert(llvm::AlignOf<TemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
-// static_assert(llvm::AlignOf<TemplateArgument>::Alignment >= llvm::AlignOf<QualType>::Alignment, "");
-// ^ Moved after class TemplateArgument, as it is is forward declared here.
+// The static_asserts for alignment of TemplateSpecializationType are
+// located after class TemplateArgument, as it is is forward declared
+// here.
+
 
 /// \brief The injected class name of a C++ class template or class
 /// template partial specialization.  Used to record that a type was
@@ -4411,9 +4411,10 @@ public:
     return T->getTypeClass() == DependentTemplateSpecialization;
   }
 };
-// Assert objects tacked on the end of DependentTemplateSpecializationType won't be misaligned
-// static_assert(llvm::AlignOf<DependentTemplateSpecializationType>::Alignment >= llvm::AlignOf<TemplateArgument>::Alignment, "");
-// ^ Moved after class TemplateArgument, as it is is forward declared here.
+// The static_asserts for alignment of
+// DependentTemplateSpecializationType are located after class
+// TemplateArgument, as it is is forward declared here.
+
 
 /// \brief Represents a pack expansion of types.
 ///
