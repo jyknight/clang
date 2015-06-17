@@ -397,11 +397,13 @@ public:
     return (Scope->getKind() == Cleanup);
   }
 };
-// Assert objects tacked on the end of EHCleanupScope won't be
-// misaligned.  NOTE: there's actually a bunch of different data
-// classes tacked on, so let's just ensure alignment good enough for
-// uint64_t bytes.
-static_assert(llvm::AlignOf<EHCleanupScope>::Alignment >= llvm::AlignOf<uint64_t>::Alignment, "");
+// NOTE: there's a bunch of different data classes tacked on after an
+// EHCleanupScope. It is asserted (in EHScopeStack::pushCleanup*) that
+// they don't require greater alignment than ScopeStackAlignment. So,
+// EHCleanupScope ought to have alignment equal to that -- not more
+// (would be misaligned by the stack allocator), and not less (would
+// break the appended classes).
+static_assert(llvm::AlignOf<EHCleanupScope>::Alignment == EHScopeStack::ScopeStackAlignment, "EHCleanupScope expected alignment");
 
 /// An exceptions scope which filters exceptions thrown through it.
 /// Only exceptions matching the filter types will be permitted to be

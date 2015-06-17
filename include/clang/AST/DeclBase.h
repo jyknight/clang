@@ -72,9 +72,13 @@ namespace clang {
 ///
 /// Note: There are objects tacked on before the *beginning* of Decl
 /// (and its subclasses) in its Decl::operator new(). Proper alignment
-/// for all subclasses is asserted in DeclBase.cpp.
+/// of all subclasses (not requiring more than DeclObjAlignment) is
+/// asserted in DeclBase.cpp.
 class Decl {
 public:
+  /// \brief Alignment guaranteed when allocating Decl and any subtypes.
+  enum { DeclObjAlignment = llvm::AlignOf<uint64_t>::Alignment };
+
   /// \brief Lists the kind of concrete classes of Decl.
   enum Kind {
 #define DECL(DERIVED, BASE) DERIVED,
