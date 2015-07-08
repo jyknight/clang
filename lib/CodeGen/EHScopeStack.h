@@ -262,7 +262,7 @@ public:
 
   /// Push a lazily-created cleanup on the stack.
   template <class T, class... As> void pushCleanup(CleanupKind Kind, As... A) {
-    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment less than maximum");
+    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment is too large.");
     void *Buffer = pushCleanup(Kind, sizeof(T));
     Cleanup *Obj = new (Buffer) T(A...);
     (void) Obj;
@@ -271,7 +271,7 @@ public:
   /// Push a lazily-created cleanup on the stack. Tuple version.
   template <class T, class... As>
   void pushCleanupTuple(CleanupKind Kind, std::tuple<As...> A) {
-    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment less than maximum");
+    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment is too large.");
     void *Buffer = pushCleanup(Kind, sizeof(T));
     Cleanup *Obj = new (Buffer) T(std::move(A));
     (void) Obj;
@@ -292,7 +292,7 @@ public:
   /// stack is modified.
   template <class T, class... As>
   T *pushCleanupWithExtra(CleanupKind Kind, size_t N, As... A) {
-    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment less than maximum");
+    static_assert(llvm::AlignOf<T>::Alignment <= ScopeStackAlignment, "Cleanup's alignment is too large.");
     void *Buffer = pushCleanup(Kind, sizeof(T) + T::getExtraSize(N));
     return new (Buffer) T(N, A...);
   }
