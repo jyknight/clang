@@ -3293,14 +3293,14 @@ public:
                       param_type_iterator ArgTys, unsigned NumArgs,
                       const ExtProtoInfo &EPI, const ASTContext &Context);
 };
-static_assert(llvm::AlignOf<FunctionProtoType>::Alignment >= llvm::AlignOf<QualType>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<FunctionProtoType>::Alignment >= llvm::AlignOf<QualType>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
 // After QualType[], there can be one of 4 options: more QualType, Expr*, 2x FunctionDecl*, FunctionDecl*
-static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
-static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<FunctionDecl*>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<FunctionDecl*>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
 // And then, after any of those options, comes bool[]
-static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
-static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
-static_assert(llvm::AlignOf<FunctionDecl*>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment sufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<QualType>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
+static_assert(llvm::AlignOf<FunctionDecl*>::Alignment >= llvm::AlignOf<bool>::Alignment, "Alignment is insufficient for objects appended to FunctionProtoType");
 
 /// \brief Represents the dependent type named by a dependently-scoped
 /// typename using declaration, e.g.
@@ -4710,7 +4710,7 @@ public:
                       ArrayRef<ObjCProtocolDecl *> protocols,
                       bool isKindOf);
 };
-static_assert(llvm::AlignOf<ObjCObjectTypeImpl>::Alignment >= llvm::AlignOf<ObjCProtocolDecl*>::Alignment, "Alignment sufficient for objects appended to ObjCObjectTypeImpl");
+static_assert(llvm::AlignOf<ObjCObjectTypeImpl>::Alignment >= llvm::AlignOf<ObjCProtocolDecl*>::Alignment, "Alignment is insufficient for objects appended to ObjCObjectTypeImpl");
 
 inline QualType *ObjCObjectType::getTypeArgStorage() {
   return reinterpret_cast<QualType *>(static_cast<ObjCObjectTypeImpl*>(this)+1);

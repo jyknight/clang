@@ -494,8 +494,8 @@ public:
   /// which is mainly useful for debugging.
   std::string getAsString() const;
 };
-static_assert(llvm::AlignOf<CodeCompletionString>::Alignment >= llvm::AlignOf<CodeCompletionString::Chunk>::Alignment, "Alignment sufficient for objects appended to CodeCompletionString");
-static_assert(llvm::AlignOf<CodeCompletionString::Chunk>::Alignment >= llvm::AlignOf<const char *>::Alignment, "Alignment sufficient for objects appended to CodeCompletionString");
+static_assert(llvm::AlignOf<CodeCompletionString>::Alignment >= llvm::AlignOf<CodeCompletionString::Chunk>::Alignment, "Alignment is insufficient for objects appended to CodeCompletionString");
+static_assert(llvm::AlignOf<CodeCompletionString::Chunk>::Alignment >= llvm::AlignOf<const char *>::Alignment, "Alignment is insufficient for objects appended to CodeCompletionString");
 
 /// \brief An allocator used specifically for the purpose of code completion.
 class CodeCompletionAllocator : public llvm::BumpPtrAllocator {

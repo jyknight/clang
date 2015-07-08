@@ -172,7 +172,7 @@ public:
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
-static_assert(llvm::AlignOf<FriendDecl>::Alignment >= llvm::AlignOf<TemplateParameterList*>::Alignment, "Alignment sufficient for objects appended to FriendDecl");
+static_assert(llvm::AlignOf<FriendDecl>::Alignment >= llvm::AlignOf<TemplateParameterList*>::Alignment, "Alignment is insufficient for objects appended to FriendDecl");
 
 /// An iterator over the friend declarations of a class.
 class CXXRecordDecl::friend_iterator {

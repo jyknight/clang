@@ -295,7 +295,7 @@ private:
 
   friend class Preprocessor;
 };
-static_assert(llvm::AlignOf<MacroInfo>::Alignment >= llvm::AlignOf<unsigned>::Alignment, "Alignment sufficient for objects appended to MacroInfo");
+static_assert(llvm::AlignOf<MacroInfo>::Alignment >= llvm::AlignOf<unsigned>::Alignment, "Alignment is insufficient for objects appended to MacroInfo");
 
 class DefMacroDirective;
 
@@ -557,7 +557,7 @@ public:
   /// Get the number of macros that override this one.
   unsigned getNumOverridingMacros() const { return NumOverriddenBy; }
 };
-static_assert(llvm::AlignOf<ModuleMacro>::Alignment >= llvm::AlignOf<ModuleMacro *>::Alignment, "Alignment sufficient for objects appended to ModuleMacro");
+static_assert(llvm::AlignOf<ModuleMacro>::Alignment >= llvm::AlignOf<ModuleMacro *>::Alignment, "Alignment is insufficient for objects appended to ModuleMacro");
 
 /// \brief A description of the current definition of a macro.
 ///

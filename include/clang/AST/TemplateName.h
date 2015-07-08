@@ -108,7 +108,7 @@ public:
   iterator begin() const { return getStorage(); }
   iterator end() const { return getStorage() + size(); }
 };
-static_assert(llvm::AlignOf<OverloadedTemplateStorage>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "Alignment sufficient for objects appended to OverloadedTemplateStorage");
+static_assert(llvm::AlignOf<OverloadedTemplateStorage>::Alignment >= llvm::AlignOf<NamedDecl *>::Alignment, "Alignment is insufficient for objects appended to OverloadedTemplateStorage");
 
 /// \brief A structure for storing an already-substituted template template
 /// parameter pack.

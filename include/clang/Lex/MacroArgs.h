@@ -121,7 +121,7 @@ public:
   /// its freelist.
   MacroArgs *deallocate();
 };
-static_assert(llvm::AlignOf<MacroArgs>::Alignment >= llvm::AlignOf<Token>::Alignment, "Alignment sufficient for objects appended to MacroArgs");
+static_assert(llvm::AlignOf<MacroArgs>::Alignment >= llvm::AlignOf<Token>::Alignment, "Alignment is insufficient for objects appended to MacroArgs");
 
 }  // end namespace clang
 

@@ -501,7 +501,7 @@ public:
     }
   }
 };
-static_assert(llvm::AlignOf<CGFunctionInfo>::Alignment >= llvm::AlignOf<CGFunctionInfo::ArgInfo>::Alignment, "Alignment sufficient for objects appended to CGFunctionInfo");
+static_assert(llvm::AlignOf<CGFunctionInfo>::Alignment >= llvm::AlignOf<CGFunctionInfo::ArgInfo>::Alignment, "Alignment is insufficient for objects appended to CGFunctionInfo");
 
 }  // end namespace CodeGen
 }  // end namespace clang

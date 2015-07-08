@@ -52,7 +52,7 @@ public:
     return ((Decl* const*) (this+1))[i];
   }
 };
-static_assert(llvm::AlignOf<DeclGroup>::Alignment >= llvm::AlignOf<Decl*>::Alignment, "Alignment sufficient for objects appended to DeclGroup");
+static_assert(llvm::AlignOf<DeclGroup>::Alignment >= llvm::AlignOf<Decl*>::Alignment, "Alignment is insufficient for objects appended to DeclGroup");
 
 class DeclGroupRef {
   // Note this is not a PointerIntPair because we need the address of the

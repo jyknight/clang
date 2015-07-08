@@ -250,7 +250,7 @@ public:
                        getStmts() + 1 + NumCatchStmts + HasFinally);
   }
 };
-static_assert(llvm::AlignOf<ObjCAtTryStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "Alignment sufficient for objects appended to ObjCAtTryStmt");
+static_assert(llvm::AlignOf<ObjCAtTryStmt>::Alignment >= llvm::AlignOf<Stmt *>::Alignment, "Alignment is insufficient for objects appended to ObjCAtTryStmt");
 
 /// \brief Represents Objective-C's \@synchronized statement.
 ///

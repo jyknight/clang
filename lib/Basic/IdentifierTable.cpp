@@ -393,7 +393,7 @@ public:
     Profile(ID, keyword_begin(), getNumArgs());
   }
 };
-static_assert(llvm::AlignOf<MultiKeywordSelector>::Alignment >= llvm::AlignOf<IdentifierInfo *>::Alignment, "Alignment sufficient for objects appended to MultiKeywordSelector");
+static_assert(llvm::AlignOf<MultiKeywordSelector>::Alignment >= llvm::AlignOf<IdentifierInfo *>::Alignment, "Alignment is insufficient for objects appended to MultiKeywordSelector");
 
 } // end namespace clang.
 
