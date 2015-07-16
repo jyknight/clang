@@ -400,10 +400,12 @@ DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
   if (FoundD)
     Size += sizeof(NamedDecl *);
   if (TemplateArgs) {
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<ASTTemplateKWAndArgsInfo>());
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
   } else if (TemplateKWLoc.isValid()) {
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<ASTTemplateKWAndArgsInfo>());
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
   }
 
@@ -424,7 +426,8 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
   if (HasFoundDecl)
     Size += sizeof(NamedDecl *);
   if (HasTemplateKWAndArgsInfo) {
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<ASTTemplateKWAndArgsInfo>());
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
   }
 
@@ -3944,7 +3947,8 @@ DesignatedInitExpr::Create(const ASTContext &C, Designator *Designators,
                            SourceLocation ColonOrEqualLoc,
                            bool UsesColonSyntax, Expr *Init) {
   void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
-                         sizeof(Stmt *) * (IndexExprs.size() + 1), llvm::alignOf<DesignatedInitExpr>());
+                             sizeof(Stmt *) * (IndexExprs.size() + 1),
+                         llvm::alignOf<DesignatedInitExpr>());
   return new (Mem) DesignatedInitExpr(C, C.VoidTy, NumDesignators, Designators,
                                       ColonOrEqualLoc, UsesColonSyntax,
                                       IndexExprs, Init);

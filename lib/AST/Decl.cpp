@@ -3117,7 +3117,7 @@ FunctionDecl::setDependentTemplateSpecialization(ASTContext &Context,
   assert(TemplateOrSpecialization.isNull());
   size_t Size = sizeof(DependentFunctionTemplateSpecializationInfo);
   Size += TemplateArgs.size() * sizeof(TemplateArgumentLoc);
-  Size += Templates.size() * sizeof(FunctionTemplateDecl*);
+  Size += Templates.size() * sizeof(FunctionTemplateDecl *);
   void *Buffer = Context.Allocate(Size);
   DependentFunctionTemplateSpecializationInfo *Info =
     new (Buffer) DependentFunctionTemplateSpecializationInfo(Templates,

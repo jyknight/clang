@@ -3935,7 +3935,8 @@ public:
 /// non-canonical aliased type when the template is a type alias
 /// template.
 class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) TemplateSpecializationType
-  : public Type, public llvm::FoldingSetNode {
+    : public Type,
+      public llvm::FoldingSetNode {
   /// \brief The name of the template being specialized.  This is
   /// either a TemplateName::Template (in which case it is a
   /// ClassTemplateDecl*, a TemplateTemplateParmDecl*, or a
@@ -4332,8 +4333,9 @@ public:
 /// DependentTemplateSpecializationType - Represents a template
 /// specialization type whose template cannot be resolved, e.g.
 ///   A<T>::template B<T>
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentTemplateSpecializationType :
-  public TypeWithKeyword, public llvm::FoldingSetNode {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentTemplateSpecializationType
+    : public TypeWithKeyword,
+      public llvm::FoldingSetNode {
 
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;

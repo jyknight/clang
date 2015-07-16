@@ -1070,14 +1070,14 @@ LambdaExpr::capture_range LambdaExpr::implicit_captures() const {
   return capture_range(implicit_capture_begin(), implicit_capture_end());
 }
 
-ArrayRef<VarDecl *> 
+ArrayRef<VarDecl *>
 LambdaExpr::getCaptureInitIndexVars(const_capture_init_iterator Iter) const {
   assert(HasArrayIndexVars && "No array index-var data?");
   
   unsigned Index = Iter - capture_init_begin();
   assert(Index < getLambdaClass()->getLambdaData().NumCaptures &&
          "Capture index out-of-range");
-  VarDecl * const*IndexVars = getArrayIndexVars();
+  VarDecl *const *IndexVars = getArrayIndexVars();
   const unsigned *IndexStarts = getArrayIndexStarts();
   return llvm::makeArrayRef(IndexVars + IndexStarts[Index],
                             IndexVars + IndexStarts[Index + 1]);
@@ -1103,7 +1103,8 @@ CompoundStmt *LambdaExpr::getBody() const {
   // initialized in ASTStmtReader::VisitLambdaExpr, but for reasons I
   // don't understand, that doesn't work.
   if (!getStoredStmts()[NumCaptures])
-    *const_cast<clang::Stmt **>(&getStoredStmts()[NumCaptures]) = getCallOperator()->getBody();
+    *const_cast<clang::Stmt **>(&getStoredStmts()[NumCaptures]) =
+        getCallOperator()->getBody();
 
   return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
 }

@@ -402,7 +402,9 @@ public:
 // EHCleanupScope ought to have alignment equal to that -- not more
 // (would be misaligned by the stack allocator), and not less (would
 // break the appended classes).
-static_assert(llvm::AlignOf<EHCleanupScope>::Alignment == EHScopeStack::ScopeStackAlignment, "EHCleanupScope expected alignment");
+static_assert(llvm::AlignOf<EHCleanupScope>::Alignment ==
+                  EHScopeStack::ScopeStackAlignment,
+              "EHCleanupScope expected alignment");
 
 /// An exceptions scope which filters exceptions thrown through it.
 /// Only exceptions matching the filter types will be permitted to be
@@ -483,17 +485,16 @@ public:
     switch (get()->getKind()) {
     case EHScope::Catch:
       Size = EHCatchScope::getSizeForNumHandlers(
-          static_cast<const EHCatchScope*>(get())->getNumHandlers());
+          static_cast<const EHCatchScope *>(get())->getNumHandlers());
       break;
 
     case EHScope::Filter:
       Size = EHFilterScope::getSizeForNumFilters(
-          static_cast<const EHFilterScope*>(get())->getNumFilters());
+          static_cast<const EHFilterScope *>(get())->getNumFilters());
       break;
 
     case EHScope::Cleanup:
-      Size = static_cast<const EHCleanupScope*>(get())
-        ->getAllocatedSize();
+      Size = static_cast<const EHCleanupScope *>(get())->getAllocatedSize();
       break;
 
     case EHScope::Terminate:

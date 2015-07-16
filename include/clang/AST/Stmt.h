@@ -2076,12 +2076,10 @@ private:
   /// \brief Construct an empty captured statement.
   CapturedStmt(EmptyShell Empty, unsigned NumCaptures);
 
-  Stmt **getStoredStmts() {
-    return reinterpret_cast<Stmt **>(this + 1);
-  }
+  Stmt **getStoredStmts() { return reinterpret_cast<Stmt **>(this + 1); }
 
-  Stmt * const *getStoredStmts() const {
-    return reinterpret_cast<Stmt * const *>(this + 1);
+  Stmt *const *getStoredStmts() const {
+    return reinterpret_cast<Stmt *const *>(this + 1);
   }
 
   Capture *getStoredCaptures() const;
@@ -2163,12 +2161,14 @@ public:
   unsigned capture_size() const { return NumCaptures; }
 
   /// \brief Iterator that walks over the capture initialization arguments.
-  typedef Expr ** capture_init_iterator;
+  typedef Expr **capture_init_iterator;
   typedef llvm::iterator_range<capture_init_iterator> capture_init_range;
 
-  /// \brief Const iterator that walks over the capture initialization arguments.
-  typedef Expr * const * const_capture_init_iterator;
-  typedef llvm::iterator_range<const_capture_init_iterator> const_capture_init_range;
+  /// \brief Const iterator that walks over the capture initialization
+  /// arguments.
+  typedef Expr *const *const_capture_init_iterator;
+  typedef llvm::iterator_range<const_capture_init_iterator>
+      const_capture_init_range;
 
   capture_init_range capture_inits() {
     return capture_init_range(capture_init_begin(), capture_init_end());
@@ -2184,7 +2184,7 @@ public:
   }
 
   const_capture_init_iterator capture_init_begin() const {
-    return reinterpret_cast<Expr * const*>(getStoredStmts());
+    return reinterpret_cast<Expr *const *>(getStoredStmts());
   }
 
   /// \brief Retrieve the iterator pointing one past the last initialization

@@ -831,7 +831,7 @@ CXXTryStmt *CXXTryStmt::Create(const ASTContext &C, SourceLocation tryLoc,
 CXXTryStmt *CXXTryStmt::Create(const ASTContext &C, EmptyShell Empty,
                                unsigned numHandlers) {
   std::size_t Size = sizeof(CXXTryStmt);
-  Size += ((numHandlers + 1) * sizeof(Stmt*));
+  Size += ((numHandlers + 1) * sizeof(Stmt *));
 
   void *Mem = C.Allocate(Size, llvm::alignOf<CXXTryStmt>());
   return new (Mem) CXXTryStmt(Empty, numHandlers);

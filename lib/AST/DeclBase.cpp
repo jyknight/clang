@@ -45,7 +45,10 @@ void Decl::updateOutOfDate(IdentifierInfo &II) const {
   getASTContext().getExternalSource()->updateOutOfDateIdentifier(II);
 }
 
-#define DECL(DERIVED, BASE) static_assert(Decl::DeclObjAlignment >= llvm::AlignOf<DERIVED##Decl>::Alignment, "Alignment sufficient after objects prepended to " #DERIVED);
+#define DECL(DERIVED, BASE)                                                    \
+  static_assert(Decl::DeclObjAlignment >=                                      \
+                    llvm::AlignOf<DERIVED##Decl>::Alignment,                   \
+                "Alignment sufficient after objects prepended to " #DERIVED);
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
 
@@ -53,7 +56,8 @@ void *Decl::operator new(std::size_t Size, const ASTContext &Context,
                          unsigned ID, std::size_t Extra) {
   // Allocate an extra 8 bytes worth of storage, which ensures that the
   // resulting pointer will still be 8-byte aligned.
-  static_assert(sizeof(unsigned) * 2 >= DeclObjAlignment, "Decl won't be misaligned");
+  static_assert(sizeof(unsigned) * 2 >= DeclObjAlignment,
+                "Decl won't be misaligned");
   void *Start = Context.Allocate(Size + Extra + 8);
   void *Result = (char*)Start + 8;
 
@@ -76,8 +80,9 @@ void *Decl::operator new(std::size_t Size, const ASTContext &Ctx,
   if (Ctx.getLangOpts().ModulesLocalVisibility) {
     // Ensure required alignment of the resulting object by adding extra
     // padding at the start if required.
-    size_t ExtraAlign = llvm::OffsetToAlignment(sizeof(Module *), DeclObjAlignment);
-    char *Buffer = reinterpret_cast<char*>(
+    size_t ExtraAlign =
+        llvm::OffsetToAlignment(sizeof(Module *), DeclObjAlignment);
+    char *Buffer = reinterpret_cast<char *>(
         ::operator new(ExtraAlign + sizeof(Module *) + Size + Extra, Ctx));
     Buffer += ExtraAlign;
     return new (Buffer) Module*(nullptr) + 1;

@@ -542,7 +542,8 @@ public:
 ///     friend void foo<>(T);
 ///   };
 /// \endcode
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializationInfo {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8)
+    DependentFunctionTemplateSpecializationInfo {
   /// The number of potential template candidates.
   unsigned NumTemplates;
 
@@ -553,7 +554,8 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializat
   SourceRange AngleLocs;
 
   FunctionTemplateDecl * const *getTemplates() const {
-    return reinterpret_cast<FunctionTemplateDecl*const*>(&getTemplateArgs()[NumArgs]);
+    return reinterpret_cast<FunctionTemplateDecl *const *>(
+        &getTemplateArgs()[NumArgs]);
   }
 
 public:
@@ -563,9 +565,7 @@ public:
 
   /// \brief Returns the number of function templates that this might
   /// be a specialization of.
-  unsigned getNumTemplates() const {
-    return NumTemplates;
-  }
+  unsigned getNumTemplates() const { return NumTemplates; }
 
   /// \brief Returns the i'th template candidate.
   FunctionTemplateDecl *getTemplate(unsigned I) const {
@@ -575,13 +575,11 @@ public:
 
   /// \brief Returns the explicit template arguments that were given.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgumentLoc*>(this + 1);
+    return reinterpret_cast<const TemplateArgumentLoc *>(this + 1);
   }
 
   /// \brief Returns the number of explicit template arguments that were given.
-  unsigned getNumTemplateArgs() const {
-    return NumArgs;
-  }
+  unsigned getNumTemplateArgs() const { return NumArgs; }
 
   /// \brief Returns the nth template argument.
   const TemplateArgumentLoc &getTemplateArg(unsigned I) const {
