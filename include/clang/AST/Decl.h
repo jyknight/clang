@@ -26,6 +26,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TrailingObjects.h"
 
 namespace clang {
 struct ASTTemplateArgumentListInfo;
@@ -3613,7 +3614,9 @@ public:
 
 /// \brief This represents the body of a CapturedStmt, and serves as its
 /// DeclContext.
-class CapturedDecl : public Decl, public DeclContext {
+class CapturedDecl : public Decl, public DeclContext, llvm::TrailingObjects1<CapturedDecl, ImplicitParamDecl *> {
+protected:
+  size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) { return NumParams; }
 private:
   /// \brief The number of parameters to the outlined function.
   unsigned NumParams;
@@ -3627,8 +3630,8 @@ private:
       NumParams(NumParams), ContextParam(0), BodyAndNothrow(nullptr, false) { }
 
   ImplicitParamDecl **getParams() const {
-    return reinterpret_cast<ImplicitParamDecl **>(
-             const_cast<CapturedDecl *>(this) + 1);
+    // FIXME: doesn't seem like it should be using a const_cast.
+    return const_cast<CapturedDecl *>(this)->getTrailingObjects<ImplicitParamDecl*>();
   }
 
 public:
@@ -3689,6 +3692,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+  friend class TrailingObjects1;
 };
 
 /// \brief Describes a module import declaration, which makes the contents
@@ -3701,7 +3705,7 @@ public:
 ///
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
-class ImportDecl : public Decl {
+class ImportDecl : public Decl, llvm::TrailingObjects1<ImportDecl, SourceLocation> {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module
   /// name. 
@@ -3717,7 +3721,8 @@ class ImportDecl : public Decl {
   friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTContext;
-  
+  friend class TrailingObjects1;
+
   ImportDecl(DeclContext *DC, SourceLocation StartLoc, Module *Imported,
              ArrayRef<SourceLocation> IdentifierLocs);
 

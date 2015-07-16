@@ -3110,38 +3110,41 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &C,
   Template->addSpecialization(Info, InsertPos);
 }
 
+
 void
 FunctionDecl::setDependentTemplateSpecialization(ASTContext &Context,
                                     const UnresolvedSetImpl &Templates,
                              const TemplateArgumentListInfo &TemplateArgs) {
   assert(TemplateOrSpecialization.isNull());
-  size_t Size = sizeof(DependentFunctionTemplateSpecializationInfo);
-  Size += TemplateArgs.size() * sizeof(TemplateArgumentLoc);
-  Size += Templates.size() * sizeof(FunctionTemplateDecl *);
-  void *Buffer = Context.Allocate(Size);
   DependentFunctionTemplateSpecializationInfo *Info =
-    new (Buffer) DependentFunctionTemplateSpecializationInfo(Templates,
-                                                             TemplateArgs);
+      DependentFunctionTemplateSpecializationInfo::Create(Context, Templates, TemplateArgs);
   TemplateOrSpecialization = Info;
+}
+
+
+DependentFunctionTemplateSpecializationInfo *DependentFunctionTemplateSpecializationInfo::Create(ASTContext &Context,
+                                                    const UnresolvedSetImpl &Ts,
+                                                    const TemplateArgumentListInfo &TArgs)
+{
+  void *Buffer = Context.Allocate(totalSizeToAlloc<TemplateArgumentLoc, FunctionTemplateDecl*>(TArgs.size(), Ts.size()));
+  return new (Buffer) DependentFunctionTemplateSpecializationInfo(Ts, TArgs);
 }
 
 DependentFunctionTemplateSpecializationInfo::
 DependentFunctionTemplateSpecializationInfo(const UnresolvedSetImpl &Ts,
                                       const TemplateArgumentListInfo &TArgs)
   : AngleLocs(TArgs.getLAngleLoc(), TArgs.getRAngleLoc()) {
-  static_assert(sizeof(*this) % llvm::AlignOf<void *>::Alignment == 0,
-                "Trailing data is unaligned!");
 
   NumTemplates = Ts.size();
   NumArgs = TArgs.size();
 
   FunctionTemplateDecl **TsArray =
-    const_cast<FunctionTemplateDecl**>(getTemplates());
+      getTrailingObjects<FunctionTemplateDecl*>();
   for (unsigned I = 0, E = Ts.size(); I != E; ++I)
     TsArray[I] = cast<FunctionTemplateDecl>(Ts[I]->getUnderlyingDecl());
 
   TemplateArgumentLoc *ArgsArray =
-    const_cast<TemplateArgumentLoc*>(getTemplateArgs());
+      getTrailingObjects<TemplateArgumentLoc>();
   for (unsigned I = 0, E = TArgs.size(); I != E; ++I)
     new (&ArgsArray[I]) TemplateArgumentLoc(TArgs[I]);
 }
@@ -3891,13 +3894,13 @@ BlockDecl *BlockDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 
 CapturedDecl *CapturedDecl::Create(ASTContext &C, DeclContext *DC,
                                    unsigned NumParams) {
-  return new (C, DC, NumParams * sizeof(ImplicitParamDecl *))
+  return new (C, DC, additionalSizeToAlloc<ImplicitParamDecl *>(NumParams))
       CapturedDecl(DC, NumParams);
 }
 
 CapturedDecl *CapturedDecl::CreateDeserialized(ASTContext &C, unsigned ID,
                                                unsigned NumParams) {
-  return new (C, ID, NumParams * sizeof(ImplicitParamDecl *))
+  return new (C, ID, additionalSizeToAlloc<ImplicitParamDecl *>(NumParams))
       CapturedDecl(nullptr, NumParams);
 }
 
@@ -4042,9 +4045,8 @@ ImportDecl::ImportDecl(DeclContext *DC, SourceLocation StartLoc,
     NextLocalImport()
 {
   assert(getNumModuleIdentifiers(Imported) == IdentifierLocs.size());
-  SourceLocation *StoredLocs = reinterpret_cast<SourceLocation *>(this + 1);
-  memcpy(StoredLocs, IdentifierLocs.data(), 
-         IdentifierLocs.size() * sizeof(SourceLocation));
+  SourceLocation *StoredLocs = getTrailingObjects<SourceLocation>();
+  std::uninitialized_copy(IdentifierLocs.begin(), IdentifierLocs.end(), StoredLocs);
 }
 
 ImportDecl::ImportDecl(DeclContext *DC, SourceLocation StartLoc, 
@@ -4052,13 +4054,13 @@ ImportDecl::ImportDecl(DeclContext *DC, SourceLocation StartLoc,
   : Decl(Import, DC, StartLoc), ImportedAndComplete(Imported, false),
     NextLocalImport()
 {
-  *reinterpret_cast<SourceLocation *>(this + 1) = EndLoc;
+  *getTrailingObjects<SourceLocation>() = EndLoc;
 }
 
 ImportDecl *ImportDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation StartLoc, Module *Imported,
                                ArrayRef<SourceLocation> IdentifierLocs) {
-  return new (C, DC, IdentifierLocs.size() * sizeof(SourceLocation))
+  return new (C, DC, additionalSizeToAlloc<SourceLocation>(IdentifierLocs.size()))
       ImportDecl(DC, StartLoc, Imported, IdentifierLocs);
 }
 
@@ -4067,7 +4069,7 @@ ImportDecl *ImportDecl::CreateImplicit(ASTContext &C, DeclContext *DC,
                                        Module *Imported,
                                        SourceLocation EndLoc) {
   ImportDecl *Import =
-      new (C, DC, sizeof(SourceLocation)) ImportDecl(DC, StartLoc,
+      new (C, DC, additionalSizeToAlloc<SourceLocation>(1)) ImportDecl(DC, StartLoc,
                                                      Imported, EndLoc);
   Import->setImplicit();
   return Import;
@@ -4075,7 +4077,7 @@ ImportDecl *ImportDecl::CreateImplicit(ASTContext &C, DeclContext *DC,
 
 ImportDecl *ImportDecl::CreateDeserialized(ASTContext &C, unsigned ID,
                                            unsigned NumLocations) {
-  return new (C, ID, NumLocations * sizeof(SourceLocation))
+  return new (C, ID, additionalSizeToAlloc<SourceLocation>(NumLocations))
       ImportDecl(EmptyShell());
 }
 
@@ -4084,15 +4086,15 @@ ArrayRef<SourceLocation> ImportDecl::getIdentifierLocs() const {
     return None;
 
   const SourceLocation *StoredLocs
-    = reinterpret_cast<const SourceLocation *>(this + 1);
+    = getTrailingObjects<SourceLocation>();
   return llvm::makeArrayRef(StoredLocs,
                             getNumModuleIdentifiers(getImportedModule()));
 }
 
 SourceRange ImportDecl::getSourceRange() const {
   if (!ImportedAndComplete.getInt())
-    return SourceRange(getLocation(), 
-                       *reinterpret_cast<const SourceLocation *>(this + 1));
-  
+    return SourceRange(getLocation(),
+                       *getTrailingObjects<SourceLocation>());
+
   return SourceRange(getLocation(), getIdentifierLocs().back());
 }
