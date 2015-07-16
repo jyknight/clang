@@ -3614,9 +3614,14 @@ public:
 
 /// \brief This represents the body of a CapturedStmt, and serves as its
 /// DeclContext.
-class CapturedDecl : public Decl, public DeclContext, llvm::TrailingObjects1<CapturedDecl, ImplicitParamDecl *> {
+class CapturedDecl : public Decl,
+                     public DeclContext,
+                     llvm::TrailingObjects1<CapturedDecl, ImplicitParamDecl *> {
 protected:
-  size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) { return NumParams; }
+  size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) {
+    return NumParams;
+  }
+
 private:
   /// \brief The number of parameters to the outlined function.
   unsigned NumParams;
@@ -3631,7 +3636,8 @@ private:
 
   ImplicitParamDecl **getParams() const {
     // FIXME: doesn't seem like it should be using a const_cast.
-    return const_cast<CapturedDecl *>(this)->getTrailingObjects<ImplicitParamDecl*>();
+    return const_cast<CapturedDecl *>(this)
+        ->getTrailingObjects<ImplicitParamDecl *>();
   }
 
 public:
@@ -3705,7 +3711,8 @@ public:
 ///
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
-class ImportDecl : public Decl, llvm::TrailingObjects1<ImportDecl, SourceLocation> {
+class ImportDecl : public Decl,
+                   llvm::TrailingObjects1<ImportDecl, SourceLocation> {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module
   /// name. 

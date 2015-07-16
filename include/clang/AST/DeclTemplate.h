@@ -44,7 +44,8 @@ typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes.
-class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList : llvm::TrailingObjects1<TemplateParameterList, NamedDecl*> {
+class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList
+    : llvm::TrailingObjects1<TemplateParameterList, NamedDecl *> {
 
   /// The location of the 'template' keyword.
   SourceLocation TemplateLoc;
@@ -61,7 +62,9 @@ class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList : llv
   unsigned ContainsUnexpandedParameterPack : 1;
 
 protected:
-  size_t numTrailingObjects(OverloadToken<NamedDecl*>) const { return NumParams; }
+  size_t numTrailingObjects(OverloadToken<NamedDecl *>) const {
+    return NumParams;
+  }
 
   TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
                         NamedDecl **Params, unsigned NumParams,
@@ -81,11 +84,9 @@ public:
   /// \brief Iterates through the template parameters in this list.
   typedef NamedDecl* const* const_iterator;
 
-  iterator begin() { return getTrailingObjects<NamedDecl*>(); }
+  iterator begin() { return getTrailingObjects<NamedDecl *>(); }
 
-  const_iterator begin() const {
-    return getTrailingObjects<NamedDecl*>();
-  }
+  const_iterator begin() const { return getTrailingObjects<NamedDecl *>(); }
   iterator end() { return begin() + NumParams; }
   const_iterator end() const { return begin() + NumParams; }
 
@@ -154,9 +155,10 @@ public:
 };
 
 /// \brief A template argument list.
-class TemplateArgumentList : llvm::TrailingObjects1<TemplateArgumentList, TemplateArgument> {
+class TemplateArgumentList
+    : llvm::TrailingObjects1<TemplateArgumentList, TemplateArgument> {
   /// \brief The template argument list.
-  const TemplateArgument * Arguments;
+  const TemplateArgument *Arguments;
 
   /// \brief The number of template arguments in this template
   /// argument list.
@@ -184,9 +186,9 @@ public:
   ///
   /// The template argument list does not own the template arguments
   /// provided.
-  explicit TemplateArgumentList(OnStackType,
-                                const TemplateArgument *Args, unsigned NumArgs)
-    : Arguments(Args), NumArguments(NumArgs) { }
+  explicit TemplateArgumentList(OnStackType, const TemplateArgument *Args,
+                                unsigned NumArgs)
+      : Arguments(Args), NumArguments(NumArgs) {}
 
   /// \brief Produces a shallow copy of the given template argument list.
   ///
@@ -195,7 +197,7 @@ public:
   /// constructor, since this really really isn't safe to use that
   /// way.
   explicit TemplateArgumentList(const TemplateArgumentList *Other)
-    : Arguments(Other->data()), NumArguments(Other->size()) { }
+      : Arguments(Other->data()), NumArguments(Other->size()) {}
 
   /// \brief Retrieve the template argument at a given index.
   const TemplateArgument &get(unsigned Idx) const {
@@ -216,9 +218,7 @@ public:
   unsigned size() const { return NumArguments; }
 
   /// \brief Retrieve a pointer to the template argument list.
-  const TemplateArgument *data() const {
-    return Arguments;
-  }
+  const TemplateArgument *data() const { return Arguments; }
 
   friend class TrailingObjects1;
 };
@@ -548,7 +548,10 @@ public:
 ///     friend void foo<>(T);
 ///   };
 /// \endcode
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializationInfo : llvm::TrailingObjects2<DependentFunctionTemplateSpecializationInfo, TemplateArgumentLoc, FunctionTemplateDecl *> {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8)
+    DependentFunctionTemplateSpecializationInfo
+    : llvm::TrailingObjects2<DependentFunctionTemplateSpecializationInfo,
+                             TemplateArgumentLoc, FunctionTemplateDecl *> {
   /// The number of potential template candidates.
   unsigned NumTemplates;
 
@@ -558,8 +561,12 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializat
   /// The locations of the left and right angle brackets.
   SourceRange AngleLocs;
 
-  size_t numTrailingObjects(OverloadToken<TemplateArgumentLoc>) const { return NumArgs; }
-  size_t numTrailingObjects(OverloadToken<FunctionTemplateDecl *>) const { return NumTemplates; }
+  size_t numTrailingObjects(OverloadToken<TemplateArgumentLoc>) const {
+    return NumArgs;
+  }
+  size_t numTrailingObjects(OverloadToken<FunctionTemplateDecl *>) const {
+    return NumTemplates;
+  }
 
   DependentFunctionTemplateSpecializationInfo(
                                  const UnresolvedSetImpl &Templates,
@@ -567,21 +574,17 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentFunctionTemplateSpecializat
 
 public:
   static DependentFunctionTemplateSpecializationInfo *
-      Create(ASTContext &Context,
-             const UnresolvedSetImpl &Templates,
-             const TemplateArgumentListInfo &TemplateArgs);
-
+  Create(ASTContext &Context, const UnresolvedSetImpl &Templates,
+         const TemplateArgumentListInfo &TemplateArgs);
 
   /// \brief Returns the number of function templates that this might
   /// be a specialization of.
-  unsigned getNumTemplates() const {
-    return NumTemplates;
-  }
+  unsigned getNumTemplates() const { return NumTemplates; }
 
   /// \brief Returns the i'th template candidate.
   FunctionTemplateDecl *getTemplate(unsigned I) const {
     assert(I < getNumTemplates() && "template index out of range");
-    return getTrailingObjects<FunctionTemplateDecl*>()[I];
+    return getTrailingObjects<FunctionTemplateDecl *>()[I];
   }
 
   /// \brief Returns the explicit template arguments that were given.
@@ -1122,7 +1125,9 @@ public:
 /// template<int Size> class array { };
 /// @endcode
 class NonTypeTemplateParmDecl
-    : public DeclaratorDecl, protected TemplateParmPosition, llvm::TrailingObjects1<NonTypeTemplateParmDecl, void*> {
+    : public DeclaratorDecl,
+      protected TemplateParmPosition,
+      llvm::TrailingObjects1<NonTypeTemplateParmDecl, void *> {
   /// \brief The default template argument, if any, and whether or not
   /// it was inherited.
   typedef DefaultArgStorage<NonTypeTemplateParmDecl, Expr*> DefArgStorage;
@@ -1142,7 +1147,9 @@ class NonTypeTemplateParmDecl
   /// \brief The number of types in an expanded parameter pack.
   unsigned NumExpandedTypes;
 
-  size_t numTrailingObjects(OverloadToken<void*>) const { return NumExpandedTypes * 2; }
+  size_t numTrailingObjects(OverloadToken<void *>) const {
+    return NumExpandedTypes * 2;
+  }
 
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation StartLoc,
                           SourceLocation IdLoc, unsigned D, unsigned P,
@@ -1278,7 +1285,7 @@ public:
   /// pack.
   QualType getExpansionType(unsigned I) const {
     assert(I < NumExpandedTypes && "Out-of-range expansion type index");
-    void * const *TypesAndInfos = getTrailingObjects<void *>();
+    void *const *TypesAndInfos = getTrailingObjects<void *>();
     return QualType::getFromOpaquePtr(TypesAndInfos[2*I]);
   }
 
@@ -1286,7 +1293,7 @@ public:
   /// expanded parameter pack.
   TypeSourceInfo *getExpansionTypeSourceInfo(unsigned I) const {
     assert(I < NumExpandedTypes && "Out-of-range expansion type index");
-    void * const *TypesAndInfos = getTrailingObjects<void *>();
+    void *const *TypesAndInfos = getTrailingObjects<void *>();
     return static_cast<TypeSourceInfo *>(TypesAndInfos[2*I+1]);
   }
 
@@ -1302,10 +1309,11 @@ public:
 /// @endcode
 /// A template template parameter is a TemplateDecl because it defines the
 /// name of a template and the template parameters allowable for substitution.
-class TemplateTemplateParmDecl : public TemplateDecl,
-                                 protected TemplateParmPosition,
-                                 llvm::TrailingObjects1<TemplateTemplateParmDecl, TemplateParameterList*>
-{
+class TemplateTemplateParmDecl
+    : public TemplateDecl,
+      protected TemplateParmPosition,
+      llvm::TrailingObjects1<TemplateTemplateParmDecl,
+                             TemplateParameterList *> {
   void anchor() override;
 
   /// \brief The default template argument, if any.
@@ -1409,7 +1417,7 @@ public:
   /// pack.
   TemplateParameterList *getExpansionTemplateParameters(unsigned I) const {
     assert(I < NumExpandedParams && "Out-of-range expansion type index");
-    return getTrailingObjects<TemplateParameterList*>()[I];
+    return getTrailingObjects<TemplateParameterList *>()[I];
   }
 
   const DefArgStorage &getDefaultArgStorage() const { return DefaultArgument; }
