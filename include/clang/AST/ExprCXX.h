@@ -940,7 +940,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<CXXDefaultArgExpr>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to CXXDefaultArgExpr");
 
 /// \brief A use of a default initializer in a constructor or in aggregate
 /// initialization.
@@ -1617,10 +1616,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<LambdaExpr>::Alignment >= llvm::AlignOf<Stmt*>::Alignment, "Alignment is insufficient for objects appended to LambdaExpr");
-static_assert(llvm::AlignOf<Stmt*>::Alignment >= llvm::AlignOf<unsigned>::Alignment, "Alignment is insufficient for objects appended to LambdaExpr");
-// Code re-aligns before VarDecl *[]
-static_assert(llvm::AlignOf<LambdaExpr>::Alignment >= llvm::AlignOf<VarDecl*>::Alignment, "Alignment is insufficient for objects appended to LambdaExpr");
 
 /// An expression "T()" which creates a value-initialized rvalue of type
 /// T, which is a non-class type.  See (C++98 [5.2.3p2]).
@@ -2212,7 +2207,6 @@ public:
   friend class ASTStmtWriter;
 
 };
-static_assert(llvm::AlignOf<TypeTraitExpr>::Alignment >= llvm::AlignOf<TypeSourceInfo*>::Alignment, "Alignment is insufficient for objects appended to TypeTraitExpr");
 
 /// \brief An Embarcadero array type trait, as used in the implementation of
 /// __array_rank and __array_extent.
@@ -2634,7 +2628,6 @@ public:
     return T->getStmtClass() == UnresolvedLookupExprClass;
   }
 };
-static_assert(llvm::AlignOf<UnresolvedLookupExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment is insufficient for objects appended to UnresolvedLookupExpr");
 
 /// \brief A qualified reference to a name whose declaration cannot
 /// yet be resolved.
@@ -2796,7 +2789,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<DependentScopeDeclRefExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment is insufficient for objects appended to DependentScopeDeclRefExpr");
 
 /// Represents an expression -- generally a full-expression -- that
 /// introduces cleanups to be run at the end of the sub-expression's
@@ -2868,7 +2860,6 @@ public:
   // Iterators
   child_range children() { return child_range(&SubExpr, &SubExpr + 1); }
 };
-static_assert(llvm::AlignOf<ExprWithCleanups>::Alignment >= llvm::AlignOf<ExprWithCleanups::CleanupObject>::Alignment, "Alignment is insufficient for objects appended to ExprWithCleanups");
 
 /// \brief Describes an explicit type conversion that uses functional
 /// notion but could not be resolved because one or more arguments are
@@ -2989,7 +2980,6 @@ public:
     return child_range(begin, begin + NumArgs);
   }
 };
-static_assert(llvm::AlignOf<CXXUnresolvedConstructExpr>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to CXXUnresolvedConstructExpr");
 
 /// \brief Represents a C++ member access expression where the actual
 /// member referenced could not be resolved because the base
@@ -3237,7 +3227,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<CXXDependentScopeMemberExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment is insufficient for objects appended to CXXDependentScopeMemberExpr");
 
 /// \brief Represents a C++ member access expression for which lookup
 /// produced a set of overloaded functions.
@@ -3377,7 +3366,6 @@ public:
     return child_range(&Base, &Base + 1);
   }
 };
-static_assert(llvm::AlignOf<UnresolvedMemberExpr>::Alignment >= llvm::AlignOf<ASTTemplateKWAndArgsInfo>::Alignment, "Alignment is insufficient for objects appended to UnresolvedMemberExpr");
 
 inline ASTTemplateKWAndArgsInfo *OverloadExpr::getTemplateKWAndArgsInfo() {
   if (!HasTemplateKWAndArgsInfo) return nullptr;
@@ -3772,7 +3760,6 @@ public:
 
   child_range children() { return child_range(); }
 };
-static_assert(llvm::AlignOf<FunctionParmPackExpr>::Alignment >= llvm::AlignOf<ParmVarDecl*>::Alignment, "Alignment is insufficient for objects appended to FunctionParmPackExpr");
 
 /// \brief Represents a prvalue temporary that is written into memory so that
 /// a reference can bind to it.

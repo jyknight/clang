@@ -15,13 +15,13 @@
 #define LLVM_CLANG_LEX_MACROARGS_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Lex/Token.h"
 #include "llvm/ADT/ArrayRef.h"
 #include <vector>
 
 namespace clang {
   class MacroInfo;
   class Preprocessor;
+  class Token;
   class SourceLocation;
 
 /// MacroArgs - An instance of this class captures information about
@@ -121,7 +121,6 @@ public:
   /// its freelist.
   MacroArgs *deallocate();
 };
-static_assert(llvm::AlignOf<MacroArgs>::Alignment >= llvm::AlignOf<Token>::Alignment, "Alignment is insufficient for objects appended to MacroArgs");
 
 }  // end namespace clang
 

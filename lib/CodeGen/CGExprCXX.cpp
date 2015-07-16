@@ -1154,7 +1154,6 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, FPT, DeleteArgs);
     }
   };
-  static_assert(llvm::AlignOf<CallDeleteDuringNew>::Alignment >= llvm::AlignOf<RValue>::Alignment, "Alignment is insufficient for objects appended to CallDeleteDuringNew");
 
   /// A cleanup to call the given 'operator delete' function upon
   /// abnormal exit from a new expression when the new expression is
@@ -1214,7 +1213,6 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, FPT, DeleteArgs);
     }
   };
-  static_assert(llvm::AlignOf<CallDeleteDuringConditionalNew>::Alignment >= llvm::AlignOf<DominatingValue<RValue>::saved_type>::Alignment, "Alignment is insufficient for objects appended to CallDeleteDuringNew");
 }
 
 /// Enter a cleanup to call 'operator delete' if the initializer in a

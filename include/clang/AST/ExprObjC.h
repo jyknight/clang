@@ -201,7 +201,6 @@ public:
     
   friend class ASTStmtReader;
 };
-static_assert(llvm::AlignOf<ObjCArrayLiteral>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to ObjCArrayLiteral");
 
 /// \brief An element in an Objective-C dictionary literal.
 ///
@@ -232,7 +231,6 @@ namespace clang {
 /// ObjCDictionaryLiteral - AST node to represent objective-c dictionary 
 /// literals; as in:  @{@"name" : NSUserName(), @"date" : [NSDate date] };
 class ObjCDictionaryLiteral : public Expr {
- public:
   /// \brief Key/value pair used to store the key and value of a given element.
   ///
   /// Objects of this type are stored directly after the expression.
@@ -253,7 +251,6 @@ class ObjCDictionaryLiteral : public Expr {
     unsigned NumExpansionsPlusOne;
   };
 
- private:
   /// \brief The number of elements in this dictionary literal.
   unsigned NumElements : 31;
   
@@ -352,8 +349,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<ObjCDictionaryLiteral>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment, "Alignment is insufficient for objects appended to ObjCDictionaryLiteral");
-static_assert(llvm::AlignOf<ObjCDictionaryLiteral::KeyValuePair>::Alignment >= llvm::AlignOf<ObjCDictionaryLiteral::ExpansionData>::Alignment, "Alignment is insufficient for objects appended to ObjCDictionaryLiteral");
 
 
 /// ObjCEncodeExpr, used for \@encode in Objective-C.  \@encode has the same
@@ -1370,9 +1365,6 @@ public:
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };
-static_assert(llvm::AlignOf<ObjCMessageExpr>::Alignment >= llvm::AlignOf<void*>::Alignment, "Alignment is insufficient for objects appended to ObjCMessageExpr");
-static_assert(llvm::AlignOf<void*>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to ObjCMessageExpr");
-static_assert(llvm::AlignOf<Expr*>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "Alignment is insufficient for objects appended to ObjCMessageExpr");
 
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.
 /// (similar in spirit to MemberExpr).

@@ -3757,7 +3757,6 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Import; }
 };
-static_assert(llvm::AlignOf<ImportDecl>::Alignment >= llvm::AlignOf<SourceLocation>::Alignment, "Alignment is insufficient for objects appended to ImportDecl");
 
 /// \brief Represents an empty-declaration.
 class EmptyDecl : public Decl {

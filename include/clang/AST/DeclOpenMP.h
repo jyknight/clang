@@ -84,7 +84,6 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == OMPThreadPrivate; }
 };
-static_assert(llvm::AlignOf<OMPThreadPrivateDecl>::Alignment >= llvm::AlignOf<Expr*>::Alignment, "Alignment is insufficient for objects appended to OMPThreadPrivateDecl");
 
 }  // end namespace clang
 

@@ -476,12 +476,6 @@ public:
   /// a Spelling enumeration, the value UINT_MAX is returned.
   unsigned getSemanticSpelling() const;
 };
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ArgsUnion>::Alignment, "Alignment is insufficient for objects appended to AttributeList");
-static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AvailabilityChange>::Alignment, "Alignment is insufficient for objects appended to AttributeList");
-static_assert(llvm::AlignOf<ArgsUnion>::Alignment >= llvm::AlignOf<AttributeList::TypeTagForDatatypeData>::Alignment, "Alignment is insufficient for objects appended to AttributeList");
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<ParsedType>::Alignment, "Alignment is insufficient for objects appended to AttributeList");
-static_assert(llvm::AlignOf<AttributeList>::Alignment >= llvm::AlignOf<AttributeList::PropertyData>::Alignment, "Alignment is insufficient for objects appended to AttributeList");
-
 
 /// A factory, from which one makes pools, from which one creates
 /// individual attributes which are deallocated with the pool.
@@ -543,7 +537,6 @@ public:
   AttributeFactory();
   ~AttributeFactory();
 };
-
 
 class AttributePool {
   AttributeFactory &Factory;
