@@ -3614,9 +3614,10 @@ public:
 
 /// \brief This represents the body of a CapturedStmt, and serves as its
 /// DeclContext.
-class CapturedDecl final : public Decl,
-                     public DeclContext,
-                     llvm::TrailingObjects<CapturedDecl, ImplicitParamDecl *> {
+class CapturedDecl final
+    : public Decl,
+      public DeclContext,
+      llvm::TrailingObjects<CapturedDecl, ImplicitParamDecl *> {
 protected:
   size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) {
     return NumParams;
@@ -3712,7 +3713,7 @@ public:
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
 class ImportDecl final : public Decl,
-                   llvm::TrailingObjects<ImportDecl, SourceLocation> {
+                         llvm::TrailingObjects<ImportDecl, SourceLocation> {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module
   /// name. 

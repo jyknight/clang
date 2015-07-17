@@ -137,23 +137,24 @@ public:
   }
 
   friend class TrailingObjects;
-  template<size_t N> friend class FixedSizeTemplateParameterListStorage;
+  template <size_t N> friend class FixedSizeTemplateParameterListStorage;
 };
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes. Suitable for creating on the stack.
-template<size_t N>
-class FixedSizeTemplateParameterListStorage {
+template <size_t N> class FixedSizeTemplateParameterListStorage {
   char Mem[TemplateParameterList::totalSizeToAlloc<NamedDecl *>(N)];
 
 public:
   FixedSizeTemplateParameterListStorage(SourceLocation TemplateLoc,
                                         SourceLocation LAngleLoc,
-                                        NamedDecl **Params, SourceLocation RAngleLoc) {
-    new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc);
+                                        NamedDecl **Params,
+                                        SourceLocation RAngleLoc) {
+    new (Mem)
+        TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc);
   }
-  TemplateParameterList* get() {
-    return reinterpret_cast<TemplateParameterList*>(Mem);
+  TemplateParameterList *get() {
+    return reinterpret_cast<TemplateParameterList *>(Mem);
   }
 };
 
@@ -1315,8 +1316,7 @@ public:
 class TemplateTemplateParmDecl final
     : public TemplateDecl,
       protected TemplateParmPosition,
-      llvm::TrailingObjects<TemplateTemplateParmDecl,
-                             TemplateParameterList *> {
+      llvm::TrailingObjects<TemplateTemplateParmDecl, TemplateParameterList *> {
   void anchor() override;
 
   /// \brief The default template argument, if any.
