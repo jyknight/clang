@@ -44,8 +44,8 @@ typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes.
-class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList
-    : llvm::TrailingObjects1<TemplateParameterList, NamedDecl *> {
+class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList final
+    : llvm::TrailingObjects<TemplateParameterList, NamedDecl *> {
 
   /// The location of the 'template' keyword.
   SourceLocation TemplateLoc;
@@ -85,7 +85,6 @@ public:
   typedef NamedDecl* const* const_iterator;
 
   iterator begin() { return getTrailingObjects<NamedDecl *>(); }
-
   const_iterator begin() const { return getTrailingObjects<NamedDecl *>(); }
   iterator end() { return begin() + NumParams; }
   const_iterator end() const { return begin() + NumParams; }
@@ -137,26 +136,30 @@ public:
     return SourceRange(TemplateLoc, RAngleLoc);
   }
 
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
+  template<size_t N> friend class FixedSizeTemplateParameterListStorage;
 };
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes. Suitable for creating on the stack.
 template<size_t N>
-class FixedSizeTemplateParameterList : public TemplateParameterList {
-  NamedDecl *Params[N];
+class FixedSizeTemplateParameterListStorage {
+  char Mem[TemplateParameterList::totalSizeToAlloc<NamedDecl *>(N)];
 
 public:
-  FixedSizeTemplateParameterList(SourceLocation TemplateLoc,
-                                 SourceLocation LAngleLoc,
-                                 NamedDecl **Params, SourceLocation RAngleLoc) :
-    TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc) {
+  FixedSizeTemplateParameterListStorage(SourceLocation TemplateLoc,
+                                        SourceLocation LAngleLoc,
+                                        NamedDecl **Params, SourceLocation RAngleLoc) {
+    new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc);
+  }
+  TemplateParameterList* get() {
+    return reinterpret_cast<TemplateParameterList*>(Mem);
   }
 };
 
 /// \brief A template argument list.
-class TemplateArgumentList
-    : llvm::TrailingObjects1<TemplateArgumentList, TemplateArgument> {
+class TemplateArgumentList final
+    : llvm::TrailingObjects<TemplateArgumentList, TemplateArgument> {
   /// \brief The template argument list.
   const TemplateArgument *Arguments;
 
@@ -220,7 +223,7 @@ public:
   /// \brief Retrieve a pointer to the template argument list.
   const TemplateArgument *data() const { return Arguments; }
 
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
 };
 
 void *allocateDefaultArgStorageChain(const ASTContext &C);
@@ -549,9 +552,9 @@ public:
 ///   };
 /// \endcode
 class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8)
-    DependentFunctionTemplateSpecializationInfo
-    : llvm::TrailingObjects2<DependentFunctionTemplateSpecializationInfo,
-                             TemplateArgumentLoc, FunctionTemplateDecl *> {
+    DependentFunctionTemplateSpecializationInfo final
+    : llvm::TrailingObjects<DependentFunctionTemplateSpecializationInfo,
+                            TemplateArgumentLoc, FunctionTemplateDecl *> {
   /// The number of potential template candidates.
   unsigned NumTemplates;
 
@@ -609,7 +612,7 @@ public:
     return AngleLocs.getEnd();
   }
 
-  friend class TrailingObjects2;
+  friend class TrailingObjects;
 };
 
 /// Declaration of a redeclarable template.
@@ -1124,10 +1127,10 @@ public:
 /// @code
 /// template<int Size> class array { };
 /// @endcode
-class NonTypeTemplateParmDecl
+class NonTypeTemplateParmDecl final
     : public DeclaratorDecl,
       protected TemplateParmPosition,
-      llvm::TrailingObjects1<NonTypeTemplateParmDecl, void *> {
+      llvm::TrailingObjects<NonTypeTemplateParmDecl, void *> {
   /// \brief The default template argument, if any, and whether or not
   /// it was inherited.
   typedef DefaultArgStorage<NonTypeTemplateParmDecl, Expr*> DefArgStorage;
@@ -1169,7 +1172,7 @@ class NonTypeTemplateParmDecl
                           TypeSourceInfo **ExpandedTInfos);
 
   friend class ASTDeclReader;
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
 
 public:
   static NonTypeTemplateParmDecl *
@@ -1309,10 +1312,10 @@ public:
 /// @endcode
 /// A template template parameter is a TemplateDecl because it defines the
 /// name of a template and the template parameters allowable for substitution.
-class TemplateTemplateParmDecl
+class TemplateTemplateParmDecl final
     : public TemplateDecl,
       protected TemplateParmPosition,
-      llvm::TrailingObjects1<TemplateTemplateParmDecl,
+      llvm::TrailingObjects<TemplateTemplateParmDecl,
                              TemplateParameterList *> {
   void anchor() override;
 
@@ -1467,7 +1470,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
 };
 
 /// \brief Represents a class template specialization, which refers to

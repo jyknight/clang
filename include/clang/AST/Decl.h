@@ -3614,9 +3614,9 @@ public:
 
 /// \brief This represents the body of a CapturedStmt, and serves as its
 /// DeclContext.
-class CapturedDecl : public Decl,
+class CapturedDecl final : public Decl,
                      public DeclContext,
-                     llvm::TrailingObjects1<CapturedDecl, ImplicitParamDecl *> {
+                     llvm::TrailingObjects<CapturedDecl, ImplicitParamDecl *> {
 protected:
   size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) {
     return NumParams;
@@ -3698,7 +3698,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
 };
 
 /// \brief Describes a module import declaration, which makes the contents
@@ -3711,8 +3711,8 @@ public:
 ///
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
-class ImportDecl : public Decl,
-                   llvm::TrailingObjects1<ImportDecl, SourceLocation> {
+class ImportDecl final : public Decl,
+                   llvm::TrailingObjects<ImportDecl, SourceLocation> {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module
   /// name. 
@@ -3728,7 +3728,7 @@ class ImportDecl : public Decl,
   friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTContext;
-  friend class TrailingObjects1;
+  friend class TrailingObjects;
 
   ImportDecl(DeclContext *DC, SourceLocation StartLoc, Module *Imported,
              ArrayRef<SourceLocation> IdentifierLocs);
