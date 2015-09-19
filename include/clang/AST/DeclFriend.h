@@ -37,7 +37,7 @@ namespace clang {
 /// @endcode
 ///
 /// The semantic context of a friend decl is its declaring class.
-class FriendDecl : public Decl {
+class FriendDecl final : public Decl, private llvm::TrailingObjects<FriendDecl, TemplateParameterList *> {
   virtual void anchor();
 public:
   typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
@@ -64,10 +64,10 @@ private:
 
   // The tail-allocated friend type template parameter lists (if any).
   TemplateParameterList* const *getTPLists() const {
-    return reinterpret_cast<TemplateParameterList* const *>(this + 1);
+    return getTrailingObjects<TemplateParameterList *>();
   }
   TemplateParameterList **getTPLists() {
-    return reinterpret_cast<TemplateParameterList**>(this + 1);
+    return getTrailingObjects<TemplateParameterList *>();
   }
 
   friend class CXXRecordDecl::friend_iterator;
@@ -171,6 +171,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+  friend TrailingObjects;
 };
 
 /// An iterator over the friend declarations of a class.

@@ -29,7 +29,7 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
                                                    DeclContext *DC,
                                                    SourceLocation L,
                                                    ArrayRef<Expr *> VL) {
-  OMPThreadPrivateDecl *D = new (C, DC, VL.size() * sizeof(Expr *))
+  OMPThreadPrivateDecl *D = new (C, DC, additionalSizeToAlloc<Expr*>(VL.size()))
       OMPThreadPrivateDecl(OMPThreadPrivate, DC, L);
   D->NumVars = VL.size();
   D->setVars(VL);
@@ -39,7 +39,7 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
 OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
                                                                unsigned ID,
                                                                unsigned N) {
-  OMPThreadPrivateDecl *D = new (C, ID, N * sizeof(Expr *))
+  OMPThreadPrivateDecl *D = new (C, ID, additionalSizeToAlloc<Expr*>(N))
       OMPThreadPrivateDecl(OMPThreadPrivate, nullptr, SourceLocation());
   D->NumVars = N;
   return D;
@@ -48,7 +48,6 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
 void OMPThreadPrivateDecl::setVars(ArrayRef<Expr *> VL) {
   assert(VL.size() == NumVars &&
          "Number of variables is not the same as the preallocated buffer");
-  Expr **Vars = reinterpret_cast<Expr **>(this + 1);
-  std::copy(VL.begin(), VL.end(), Vars);
+  std::uninitialized_copy(VL.begin(), VL.end(), getTrailingObjects<Expr*>());
 }
 
