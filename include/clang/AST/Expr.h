@@ -1097,7 +1097,7 @@ public:
   /// this name, if any.
   SourceLocation getTemplateKeywordLoc() const {
     if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+    return getTemplateKWAndArgsInfo()->TemplateKWLoc;
   }
 
   /// \brief Retrieve the location of the left angle bracket starting the
@@ -1124,21 +1124,21 @@ public:
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
-  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
+  ASTTemplateKWAndArgsInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
     return *getTemplateKWAndArgsInfo();
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
-  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
+  const ASTTemplateKWAndArgsInfo &getExplicitTemplateArgs() const {
     return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgs();
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
+  const ASTTemplateKWAndArgsInfo *getOptionalExplicitTemplateArgs() const {
     if (!hasExplicitTemplateArgs()) return nullptr;
     return &getExplicitTemplateArgs();
   }
@@ -2502,7 +2502,7 @@ public:
   /// the member name, if any.
   SourceLocation getTemplateKeywordLoc() const {
     if (!HasTemplateKWAndArgsInfo) return SourceLocation();
-    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+    return getTemplateKWAndArgsInfo()->TemplateKWLoc;
   }
 
   /// \brief Retrieve the location of the left angle bracket starting the
@@ -2536,7 +2536,7 @@ public:
   /// \brief Retrieve the explicit template argument list that
   /// follow the member template name.  This must only be called on an
   /// expression with explicit template arguments.
-  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
+  ASTTemplateKWAndArgsInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
     return *getTemplateKWAndArgsInfo();
   }
@@ -2544,14 +2544,14 @@ public:
   /// \brief Retrieve the explicit template argument list that
   /// followed the member template name.  This must only be called on
   /// an expression with explicit template arguments.
-  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
+  const ASTTemplateKWAndArgsInfo &getExplicitTemplateArgs() const {
     return const_cast<MemberExpr *>(this)->getExplicitTemplateArgs();
   }
 
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
+  const ASTTemplateKWAndArgsInfo *getOptionalExplicitTemplateArgs() const {
     if (!hasExplicitTemplateArgs()) return nullptr;
     return &getExplicitTemplateArgs();
   }

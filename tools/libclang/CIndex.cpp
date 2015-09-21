@@ -1755,7 +1755,7 @@ DEF_JOB(StmtVisit, Stmt, StmtVisitKind)
 DEF_JOB(MemberExprParts, MemberExpr, MemberExprPartsKind)
 DEF_JOB(DeclRefExprParts, DeclRefExpr, DeclRefExprPartsKind)
 DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
-DEF_JOB(ExplicitTemplateArgsVisit, ASTTemplateArgumentListInfo, 
+DEF_JOB(ExplicitTemplateArgsVisit, ASTTemplateKWAndArgsInfo, 
         ExplicitTemplateArgsVisitKind)
 DEF_JOB(SizeOfPackExprParts, SizeOfPackExpr, SizeOfPackExprPartsKind)
 DEF_JOB(LambdaExprParts, LambdaExpr, LambdaExprPartsKind)
@@ -1949,7 +1949,7 @@ public:
 private:
   void AddDeclarationNameInfo(const Stmt *S);
   void AddNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier);
-  void AddExplicitTemplateArgs(const ASTTemplateArgumentListInfo *A);
+  void AddExplicitTemplateArgs(const ASTTemplateKWAndArgsInfo *A);
   void AddMemberRef(const FieldDecl *D, SourceLocation L);
   void AddStmt(const Stmt *S);
   void AddDecl(const Decl *D, bool isFirst = true);
@@ -1980,7 +1980,7 @@ void EnqueueVisitor::AddDecl(const Decl *D, bool isFirst) {
     WL.push_back(DeclVisit(D, Parent, isFirst));
 }
 void EnqueueVisitor::
-  AddExplicitTemplateArgs(const ASTTemplateArgumentListInfo *A) {
+  AddExplicitTemplateArgs(const ASTTemplateKWAndArgsInfo *A) {
   if (A)
     WL.push_back(ExplicitTemplateArgsVisit(A, Parent));
 }
@@ -2677,7 +2677,7 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         continue;
       }
       case VisitorJob::ExplicitTemplateArgsVisitKind: {
-        const ASTTemplateArgumentListInfo *ArgList =
+        const ASTTemplateKWAndArgsInfo *ArgList =
           cast<ExplicitTemplateArgsVisit>(&LI)->get();
         for (const TemplateArgumentLoc *Arg = ArgList->getTemplateArgs(),
                *ArgEnd = Arg + ArgList->NumTemplateArgs;
@@ -2887,7 +2887,7 @@ typedef SmallVector<SourceRange, 4> RefNamePieces;
 RefNamePieces
 buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
             const DeclarationNameInfo &NI, SourceRange QLoc,
-            const ASTTemplateArgumentListInfo *TemplateArgs = nullptr) {
+            const ASTTemplateKWAndArgsInfo *TemplateArgs = nullptr) {
   const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
   const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
   const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;
