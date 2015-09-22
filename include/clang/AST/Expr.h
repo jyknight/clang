@@ -919,7 +919,16 @@ public:
 ///   DeclRefExprBits.RefersToEnclosingVariableOrCapture
 ///       Specifies when this declaration reference expression (validly)
 ///       refers to an enclosed local or a captured variable.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DeclRefExpr : public Expr {
+class DeclRefExpr final : public Expr, private llvm::TrailingObjects<DeclRefExpr, NestedNameSpecifierLoc, NamedDecl *, ASTTemplateKWAndArgsInfo> {
+  friend TrailingObjects;
+  size_t numTrailingObjects(OverloadToken<NestedNameSpecifierLoc>) const {
+    return hasQualifier() ? 1 : 0;
+  }
+
+  size_t numTrailingObjects(OverloadToken<NamedDecl *>) const {
+    return hasFoundDecl() ? 1 : 0;
+  }
+
   /// \brief The declaration that we are referencing.
   ValueDecl *D;
 
@@ -930,35 +939,9 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DeclRefExpr : public Expr {
   /// embedded in D.
   DeclarationNameLoc DNLoc;
 
-  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
-  NestedNameSpecifierLoc &getInternalQualifierLoc() {
-    assert(hasQualifier());
-    return *reinterpret_cast<NestedNameSpecifierLoc *>(this + 1);
-  }
-
-  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
-  const NestedNameSpecifierLoc &getInternalQualifierLoc() const {
-    return const_cast<DeclRefExpr *>(this)->getInternalQualifierLoc();
-  }
-
   /// \brief Test whether there is a distinct FoundDecl attached to the end of
   /// this DRE.
   bool hasFoundDecl() const { return DeclRefExprBits.HasFoundDecl; }
-
-  /// \brief Helper to retrieve the optional NamedDecl through which this
-  /// reference occurred.
-  NamedDecl *&getInternalFoundDecl() {
-    assert(hasFoundDecl());
-    if (hasQualifier())
-      return *reinterpret_cast<NamedDecl **>(&getInternalQualifierLoc() + 1);
-    return *reinterpret_cast<NamedDecl **>(this + 1);
-  }
-
-  /// \brief Helper to retrieve the optional NamedDecl through which this
-  /// reference occurred.
-  NamedDecl *getInternalFoundDecl() const {
-    return const_cast<DeclRefExpr *>(this)->getInternalFoundDecl();
-  }
 
   DeclRefExpr(const ASTContext &Ctx,
               NestedNameSpecifierLoc QualifierLoc,
@@ -1032,21 +1015,17 @@ public:
   bool hasQualifier() const { return DeclRefExprBits.HasQualifier; }
 
   /// \brief If the name was qualified, retrieves the nested-name-specifier
-  /// that precedes the name. Otherwise, returns NULL.
-  NestedNameSpecifier *getQualifier() const {
-    if (!hasQualifier())
-      return nullptr;
-
-    return getInternalQualifierLoc().getNestedNameSpecifier();
-  }
-
-  /// \brief If the name was qualified, retrieves the nested-name-specifier
   /// that precedes the name, with source-location information.
   NestedNameSpecifierLoc getQualifierLoc() const {
     if (!hasQualifier())
       return NestedNameSpecifierLoc();
+    return *getTrailingObjects<NestedNameSpecifierLoc>();
+  }
 
-    return getInternalQualifierLoc();
+  /// \brief If the name was qualified, retrieves the nested-name-specifier
+  /// that precedes the name. Otherwise, returns NULL.
+  NestedNameSpecifier *getQualifier() const {
+    return getQualifierLoc().getNestedNameSpecifier();
   }
 
   /// \brief Get the NamedDecl through which this reference occurred.
@@ -1054,14 +1033,15 @@ public:
   /// This Decl may be different from the ValueDecl actually referred to in the
   /// presence of using declarations, etc. It always returns non-NULL, and may
   /// simple return the ValueDecl when appropriate.
+
   NamedDecl *getFoundDecl() {
-    return hasFoundDecl() ? getInternalFoundDecl() : D;
+    return hasFoundDecl() ? *getTrailingObjects<NamedDecl*>() : D;
   }
 
   /// \brief Get the NamedDecl through which this reference occurred.
   /// See non-const variant.
   const NamedDecl *getFoundDecl() const {
-    return hasFoundDecl() ? getInternalFoundDecl() : D;
+    return hasFoundDecl() ? *getTrailingObjects<NamedDecl*>() : D;
   }
 
   bool hasTemplateKWAndArgsInfo() const {
@@ -1073,24 +1053,15 @@ public:
     if (!hasTemplateKWAndArgsInfo())
       return nullptr;
 
-    if (hasFoundDecl()) {
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-          llvm::alignAddr(&getInternalFoundDecl() + 1,
-                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
-    }
-
-    if (hasQualifier()) {
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-          llvm::alignAddr(&getInternalQualifierLoc() + 1,
-                          llvm::alignOf<ASTTemplateKWAndArgsInfo>()));
-    }
-
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
 
   /// \brief Return the optional template keyword and arguments info.
   const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
-    return const_cast<DeclRefExpr*>(this)->getTemplateKWAndArgsInfo();
+    if (!hasTemplateKWAndArgsInfo())
+      return nullptr;
+
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
 
   /// \brief Retrieve the location of the template keyword preceding

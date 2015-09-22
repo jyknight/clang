@@ -331,7 +331,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
     D(D), Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc) {
-    getInternalQualifierLoc() = QualifierLoc;
+    new (getTrailingObjects<NestedNameSpecifierLoc>()) NestedNameSpecifierLoc(QualifierLoc);
     auto *NNS = QualifierLoc.getNestedNameSpecifier();
     if (NNS->isInstantiationDependent())
       ExprBits.InstantiationDependent = true;
@@ -340,7 +340,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
   }
   DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
   if (FoundD)
-    getInternalFoundDecl() = FoundD;
+    *getTrailingObjects<NamedDecl*>() = FoundD;
   DeclRefExprBits.HasTemplateKWAndArgsInfo
     = (TemplateArgs || TemplateKWLoc.isValid()) ? 1 : 0;
   DeclRefExprBits.RefersToEnclosingVariableOrCapture =
@@ -394,18 +394,12 @@ DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
   if (D == FoundD)
     FoundD = nullptr;
 
-  std::size_t Size = sizeof(DeclRefExpr);
-  if (QualifierLoc)
-    Size += sizeof(NestedNameSpecifierLoc);
-  if (FoundD)
-    Size += sizeof(NamedDecl *);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<NestedNameSpecifierLoc, NamedDecl*, ASTTemplateKWAndArgsInfo>(QualifierLoc ? 1: 0, FoundD ? 1 : 0, 0);
   if (TemplateArgs) {
-    Size = llvm::RoundUpToAlignment(Size,
-                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
   } else if (TemplateKWLoc.isValid()) {
-    Size = llvm::RoundUpToAlignment(Size,
-                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
   }
 
@@ -420,14 +414,10 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
                                       bool HasFoundDecl,
                                       bool HasTemplateKWAndArgsInfo,
                                       unsigned NumTemplateArgs) {
-  std::size_t Size = sizeof(DeclRefExpr);
-  if (HasQualifier)
-    Size += sizeof(NestedNameSpecifierLoc);
-  if (HasFoundDecl)
-    Size += sizeof(NamedDecl *);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<NestedNameSpecifierLoc, NamedDecl*, ASTTemplateKWAndArgsInfo>(HasQualifier ? 1 : 0, HasFoundDecl ? 1 : 0, 0);
   if (HasTemplateKWAndArgsInfo) {
-    Size = llvm::RoundUpToAlignment(Size,
-                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
   }
 
