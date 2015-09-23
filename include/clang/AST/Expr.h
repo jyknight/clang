@@ -2308,19 +2308,24 @@ public:
   }
 };
 
+/// Extra data stored in some MemberExpr objects.
+struct MemberExprNameQualifier {
+  /// \brief The nested-name-specifier that qualifies the name, including
+  /// source-location information.
+  NestedNameSpecifierLoc QualifierLoc;
+
+  /// \brief The DeclAccessPair through which the MemberDecl was found due to
+  /// name qualifiers.
+  DeclAccessPair FoundDecl;
+};
+
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
-  /// Extra data stored in some member expressions.
-  struct LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberNameQualifier {
-    /// \brief The nested-name-specifier that qualifies the name, including
-    /// source-location information.
-    NestedNameSpecifierLoc QualifierLoc;
-
-    /// \brief The DeclAccessPair through which the MemberDecl was found due to
-    /// name qualifiers.
-    DeclAccessPair FoundDecl;
-  };
+class MemberExpr final : public Expr, private llvm::TrailingObjects<MemberExpr, MemberExprNameQualifier, ASTTemplateKWAndArgsInfo>  {
+  friend TrailingObjects;
+  size_t numTrailingObjects(OverloadToken<MemberExprNameQualifier>) const {
+    return HasQualifierOrFoundDecl ? 1 : 0;
+  }
 
   /// Base - the expression for the base pointer or structure references.  In
   /// X.F, this is "X".
@@ -2345,7 +2350,7 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
 
   /// \brief True if this member expression used a nested-name-specifier to
   /// refer to the member, e.g., "x->Base::f", or found its member via a using
-  /// declaration.  When true, a MemberNameQualifier
+  /// declaration.  When true, a MemberExprNameQualifier
   /// structure is allocated immediately after the MemberExpr.
   bool HasQualifierOrFoundDecl : 1;
 
@@ -2355,23 +2360,12 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) MemberExpr : public Expr {
   /// When true, an ASTTemplateKWAndArgsInfo structure and its
   /// TemplateArguments (if any) are allocated immediately after
   /// the MemberExpr or, if the member expression also has a qualifier,
-  /// after the MemberNameQualifier structure.
+  /// after the MemberExprNameQualifier structure.
   bool HasTemplateKWAndArgsInfo : 1;
 
   /// \brief True if this member expression refers to a method that
   /// was resolved from an overloaded set having size greater than 1.
   bool HadMultipleCandidates : 1;
-
-  /// \brief Retrieve the qualifier that preceded the member name, if any.
-  MemberNameQualifier *getMemberQualifier() {
-    assert(HasQualifierOrFoundDecl);
-    return reinterpret_cast<MemberNameQualifier *> (this + 1);
-  }
-
-  /// \brief Retrieve the qualifier that preceded the member name, if any.
-  const MemberNameQualifier *getMemberQualifier() const {
-    return const_cast<MemberExpr *>(this)->getMemberQualifier();
-  }
 
 public:
   MemberExpr(Expr *base, bool isarrow, SourceLocation operatorloc,
@@ -2426,7 +2420,7 @@ public:
     if (!HasQualifierOrFoundDecl)
       return DeclAccessPair::make(getMemberDecl(),
                                   getMemberDecl()->getAccess());
-    return getMemberQualifier()->FoundDecl;
+    return getTrailingObjects<MemberExprNameQualifier>()->FoundDecl;
   }
 
   /// \brief Determines whether this member expression actually had
@@ -2435,23 +2429,20 @@ public:
   bool hasQualifier() const { return getQualifier() != nullptr; }
 
   /// \brief If the member name was qualified, retrieves the
-  /// nested-name-specifier that precedes the member name. Otherwise, returns
-  /// NULL.
-  NestedNameSpecifier *getQualifier() const {
-    if (!HasQualifierOrFoundDecl)
-      return nullptr;
-
-    return getMemberQualifier()->QualifierLoc.getNestedNameSpecifier();
-  }
-
-  /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name, with source-location
   /// information.
   NestedNameSpecifierLoc getQualifierLoc() const {
-    if (!hasQualifier())
+    if (!HasQualifierOrFoundDecl)
       return NestedNameSpecifierLoc();
 
-    return getMemberQualifier()->QualifierLoc;
+    return getTrailingObjects<MemberExprNameQualifier>()->QualifierLoc;
+  }
+
+  /// \brief If the member name was qualified, retrieves the
+  /// nested-name-specifier that precedes the member name. Otherwise, returns
+  /// NULL.
+  NestedNameSpecifier *getQualifier() const {
+    return getQualifierLoc().getNestedNameSpecifier();
   }
 
   /// \brief Return the optional template keyword and arguments info.
@@ -2459,11 +2450,7 @@ public:
     if (!HasTemplateKWAndArgsInfo)
       return nullptr;
 
-    if (!HasQualifierOrFoundDecl)
-      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
-
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-                                                      getMemberQualifier() + 1);
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
 
   /// \brief Return the optional template keyword and arguments info.

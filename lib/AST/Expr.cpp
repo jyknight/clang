@@ -1405,13 +1405,14 @@ MemberExpr *MemberExpr::Create(
     ValueDecl *memberdecl, DeclAccessPair founddecl,
     DeclarationNameInfo nameinfo, const TemplateArgumentListInfo *targs,
     QualType ty, ExprValueKind vk, ExprObjectKind ok) {
-  std::size_t Size = sizeof(MemberExpr);
 
   bool hasQualOrFound = (QualifierLoc ||
                          founddecl.getDecl() != memberdecl ||
                          founddecl.getAccess() != memberdecl->getAccess());
-  if (hasQualOrFound)
-    Size += sizeof(MemberNameQualifier);
+
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<MemberExprNameQualifier, ASTTemplateKWAndArgsInfo>(hasQualOrFound ? 1 : 0, 0);
 
   if (targs)
     Size += ASTTemplateKWAndArgsInfo::sizeFor(targs->size());
@@ -1435,7 +1436,7 @@ MemberExpr *MemberExpr::Create(
     
     E->HasQualifierOrFoundDecl = true;
 
-    MemberNameQualifier *NQ = E->getMemberQualifier();
+    MemberExprNameQualifier *NQ = E->getTrailingObjects<MemberExprNameQualifier>();
     NQ->QualifierLoc = QualifierLoc;
     NQ->FoundDecl = founddecl;
   }
