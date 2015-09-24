@@ -235,7 +235,10 @@ public:
 ///
 /// This expression node represents a C++ static cast, e.g.,
 /// \c static_cast<int>(1.0).
-class CXXStaticCastExpr : public CXXNamedCastExpr {
+class CXXStaticCastExpr final : public CXXNamedCastExpr, private llvm::TrailingObjects<CXXStaticCastExpr, CXXBaseSpecifier*> {
+  friend TrailingObjects;
+  friend class CastExpr;
+
   CXXStaticCastExpr(QualType ty, ExprValueKind vk, CastKind kind, Expr *op,
                     unsigned pathSize, TypeSourceInfo *writtenTy,
                     SourceLocation l, SourceLocation RParenLoc,
@@ -266,7 +269,10 @@ public:
 /// This expression node represents a dynamic cast, e.g.,
 /// \c dynamic_cast<Derived*>(BasePtr). Such a cast may perform a run-time
 /// check to determine how to perform the type conversion.
-class CXXDynamicCastExpr : public CXXNamedCastExpr {
+class CXXDynamicCastExpr final : public CXXNamedCastExpr, private llvm::TrailingObjects<CXXDynamicCastExpr, CXXBaseSpecifier*> {
+  friend TrailingObjects;
+  friend class CastExpr;
+
   CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
                      Expr *op, unsigned pathSize, TypeSourceInfo *writtenTy,
                      SourceLocation l, SourceLocation RParenLoc,
@@ -303,7 +309,10 @@ public:
 /// A reinterpret_cast provides a differently-typed view of a value but
 /// (in Clang, as in most C++ implementations) performs no actual work at
 /// run time.
-class CXXReinterpretCastExpr : public CXXNamedCastExpr {
+class CXXReinterpretCastExpr final : public CXXNamedCastExpr, private llvm::TrailingObjects<CXXReinterpretCastExpr, CXXBaseSpecifier*> {
+  friend TrailingObjects;
+  friend class CastExpr;
+
   CXXReinterpretCastExpr(QualType ty, ExprValueKind vk, CastKind kind,
                          Expr *op, unsigned pathSize,
                          TypeSourceInfo *writtenTy, SourceLocation l,
@@ -337,7 +346,10 @@ public:
 ///
 /// A const_cast can remove type qualifiers but does not change the underlying
 /// value.
-class CXXConstCastExpr : public CXXNamedCastExpr {
+class CXXConstCastExpr final : public CXXNamedCastExpr, private llvm::TrailingObjects<CXXConstCastExpr, CXXBaseSpecifier*> {
+  friend TrailingObjects;
+  friend class CastExpr;
+
   CXXConstCastExpr(QualType ty, ExprValueKind VK, Expr *op,
                    TypeSourceInfo *writtenTy, SourceLocation l,
                    SourceLocation RParenLoc, SourceRange AngleBrackets)
@@ -1313,7 +1325,10 @@ public:
 /// \code
 ///   x = int(0.5);
 /// \endcode
-class CXXFunctionalCastExpr : public ExplicitCastExpr {
+class CXXFunctionalCastExpr final : public ExplicitCastExpr, private llvm::TrailingObjects<CXXFunctionalCastExpr, CXXBaseSpecifier*>  {
+  friend TrailingObjects;
+  friend class CastExpr;
+
   SourceLocation LParenLoc;
   SourceLocation RParenLoc;
 

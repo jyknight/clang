@@ -1745,7 +1745,7 @@ CXXBaseSpecifier **CastExpr::path_buffer() {
 #define ABSTRACT_STMT(x)
 #define CASTEXPR(Type, Base) \
   case Stmt::Type##Class: \
-    return reinterpret_cast<CXXBaseSpecifier**>(static_cast<Type*>(this)+1);
+    return static_cast<Type*>(this)->getTrailingObjects<CXXBaseSpecifier*>();
 #define STMT(Type, Base)
 #include "clang/AST/StmtNodes.inc"
   default:
@@ -1753,28 +1753,24 @@ CXXBaseSpecifier **CastExpr::path_buffer() {
   }
 }
 
-void CastExpr::setCastPath(const CXXCastPath &Path) {
-  assert(Path.size() == path_size());
-  memcpy(path_buffer(), Path.data(), Path.size() * sizeof(CXXBaseSpecifier*));
-}
-
 ImplicitCastExpr *ImplicitCastExpr::Create(const ASTContext &C, QualType T,
                                            CastKind Kind, Expr *Operand,
                                            const CXXCastPath *BasePath,
                                            ExprValueKind VK) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
-  void *Buffer =
-    C.Allocate(sizeof(ImplicitCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+  void *Buffer = 
+    C.Allocate(totalSizeToAlloc<CXXBaseSpecifier*>(PathSize));
   ImplicitCastExpr *E =
     new (Buffer) ImplicitCastExpr(T, Kind, Operand, PathSize, VK);
-  if (PathSize) E->setCastPath(*BasePath);
+  if (PathSize) 
+    std::uninitialized_copy_n(BasePath->data(), BasePath->size(), E->getTrailingObjects<CXXBaseSpecifier*>());
   return E;
 }
 
 ImplicitCastExpr *ImplicitCastExpr::CreateEmpty(const ASTContext &C,
                                                 unsigned PathSize) {
   void *Buffer =
-    C.Allocate(sizeof(ImplicitCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+    C.Allocate(totalSizeToAlloc<CXXBaseSpecifier*>(PathSize));
   return new (Buffer) ImplicitCastExpr(EmptyShell(), PathSize);
 }
 
@@ -1786,17 +1782,18 @@ CStyleCastExpr *CStyleCastExpr::Create(const ASTContext &C, QualType T,
                                        SourceLocation L, SourceLocation R) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer =
-    C.Allocate(sizeof(CStyleCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+    C.Allocate(totalSizeToAlloc<CXXBaseSpecifier*>(PathSize));
   CStyleCastExpr *E =
     new (Buffer) CStyleCastExpr(T, VK, K, Op, PathSize, WrittenTy, L, R);
-  if (PathSize) E->setCastPath(*BasePath);
+  if (PathSize) 
+    std::uninitialized_copy_n(BasePath->data(), BasePath->size(), E->getTrailingObjects<CXXBaseSpecifier*>());
   return E;
 }
 
 CStyleCastExpr *CStyleCastExpr::CreateEmpty(const ASTContext &C,
                                             unsigned PathSize) {
   void *Buffer =
-    C.Allocate(sizeof(CStyleCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
+    C.Allocate(totalSizeToAlloc<CXXBaseSpecifier*>(PathSize));
   return new (Buffer) CStyleCastExpr(EmptyShell(), PathSize);
 }
 
