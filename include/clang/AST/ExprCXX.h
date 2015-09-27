@@ -942,7 +942,8 @@ public:
 /// This wraps up a function call argument that was created from the
 /// corresponding parameter's default argument, when the call did not
 /// explicitly supply arguments for all of the parameters.
-class CXXDefaultArgExpr : public Expr {
+class CXXDefaultArgExpr : public Expr, llvm::TrailingObjects<PseudoObjectExpr, Expr *> {
+  friend TrailingObjects;
   /// \brief The parameter whose default is being used.
   ///
   /// When the bit is set, the subexpression is stored after the
@@ -968,7 +969,7 @@ class CXXDefaultArgExpr : public Expr {
            SubExpr->getValueKind(), SubExpr->getObjectKind(),
            false, false, false, false),
       Param(param, true), Loc(Loc) {
-    *reinterpret_cast<Expr **>(this + 1) = SubExpr;
+    *getTrailingObjects<Expr*>() = SubExpr;
   }
 
 public:
@@ -993,12 +994,12 @@ public:
   // Retrieve the actual argument to the function call.
   const Expr *getExpr() const {
     if (Param.getInt())
-      return *reinterpret_cast<Expr const * const*> (this + 1);
+      return *getTrailingObjects<Expr*>();
     return getParam()->getDefaultArg();
   }
   Expr *getExpr() {
     if (Param.getInt())
-      return *reinterpret_cast<Expr **> (this + 1);
+      return *getTrailingObjects<Expr*>();
     return getParam()->getDefaultArg();
   }
 
@@ -1430,7 +1431,17 @@ public:
 /// C++1y introduces a new form of "capture" called an init-capture that
 /// includes an initializing expression (rather than capturing a variable),
 /// and which can never occur implicitly.
-class LambdaExpr : public Expr {
+class LambdaExpr final : public Expr, private llvm::TrailingObjects<LambdaExpr, Stmt *, VarDecl *, unsigned> {
+  friend TrailingObjects;
+
+  size_t numTrailingObjects(OverloadToken<Stmt *>) const {
+    return NumCaptures + 1;
+  }
+
+  size_t numTrailingObjects(OverloadToken<VarDecl *>) const {
+    return NumArrayIndexVars;
+  }
+
   /// \brief The source range that covers the lambda introducer ([...]).
   SourceRange IntroducerRange;
 
@@ -1451,10 +1462,9 @@ class LambdaExpr : public Expr {
   /// \brief Whether this lambda had the result type explicitly specified.
   unsigned ExplicitResultType : 1;
   
-  /// \brief Whether there are any array index variables stored at the end of
-  /// this lambda expression.
-  unsigned HasArrayIndexVars : 1;
-  
+  /// \brief The number of ArrayIndexVars.
+  unsigned NumArrayIndexVars;
+
   /// \brief The location of the closing brace ('}') that completes
   /// the lambda.
   /// 
@@ -1485,43 +1495,36 @@ class LambdaExpr : public Expr {
              bool ContainsUnexpandedParameterPack);
 
   /// \brief Construct an empty lambda expression.
-  LambdaExpr(EmptyShell Empty, unsigned NumCaptures, bool HasArrayIndexVars)
+  LambdaExpr(EmptyShell Empty, unsigned NumCaptures, unsigned NumArrayIndexVars)
     : Expr(LambdaExprClass, Empty),
       NumCaptures(NumCaptures), CaptureDefault(LCD_None), ExplicitParams(false),
-      ExplicitResultType(false), HasArrayIndexVars(true) { 
+    ExplicitResultType(false), NumArrayIndexVars(NumArrayIndexVars) { 
     getStoredStmts()[NumCaptures] = nullptr;
   }
 
-  Stmt **getStoredStmts() { return reinterpret_cast<Stmt **>(this + 1); }
+  Stmt **getStoredStmts() { return getTrailingObjects<Stmt *>(); }
 
   Stmt *const *getStoredStmts() const {
-    return reinterpret_cast<Stmt *const *>(this + 1);
+    return getTrailingObjects<Stmt *>();
   }
 
   /// \brief Retrieve the mapping from captures to the first array index
   /// variable.
   unsigned *getArrayIndexStarts() {
-    return reinterpret_cast<unsigned *>(getStoredStmts() + NumCaptures + 1);
+    return getTrailingObjects<unsigned>();
   }
 
   const unsigned *getArrayIndexStarts() const {
-    return reinterpret_cast<const unsigned *>(getStoredStmts() + NumCaptures +
-                                              1);
+    return getTrailingObjects<unsigned>();
   }
 
   /// \brief Retrieve the complete set of array-index variables.
   VarDecl **getArrayIndexVars() {
-    unsigned ArrayIndexSize = llvm::RoundUpToAlignment(
-        sizeof(unsigned) * (NumCaptures + 1), llvm::alignOf<VarDecl *>());
-    return reinterpret_cast<VarDecl **>(
-        reinterpret_cast<char *>(getArrayIndexStarts()) + ArrayIndexSize);
+    return getTrailingObjects<VarDecl *>();
   }
 
   VarDecl *const *getArrayIndexVars() const {
-    unsigned ArrayIndexSize = llvm::RoundUpToAlignment(
-        sizeof(unsigned) * (NumCaptures + 1), llvm::alignOf<VarDecl *>());
-    return reinterpret_cast<VarDecl *const *>(
-        reinterpret_cast<const char *>(getArrayIndexStarts()) + ArrayIndexSize);
+    return getTrailingObjects<VarDecl *>();
   }
 
 public:
@@ -1698,6 +1701,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return ClosingBrace; }
 
   child_range children() {
+    // Includes initialization exprs plus body stmt
     return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
   }
 

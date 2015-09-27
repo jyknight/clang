@@ -763,7 +763,7 @@ const IdentifierInfo *UserDefinedLiteral::getUDSuffix() const {
 CXXDefaultArgExpr *
 CXXDefaultArgExpr::Create(const ASTContext &C, SourceLocation Loc, 
                           ParmVarDecl *Param, Expr *SubExpr) {
-  void *Mem = C.Allocate(sizeof(CXXDefaultArgExpr) + sizeof(Stmt *));
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(1));
   return new (Mem) CXXDefaultArgExpr(CXXDefaultArgExprClass, Loc, Param, 
                                      SubExpr);
 }
@@ -972,8 +972,8 @@ LambdaExpr::LambdaExpr(QualType T,
   *Stored++ = getCallOperator()->getBody();
 
   // Copy the array index variables, if any.
-  HasArrayIndexVars = !ArrayIndexVars.empty();
-  if (HasArrayIndexVars) {
+  NumArrayIndexVars = ArrayIndexVars.size();
+  if (NumArrayIndexVars != 0) {
     assert(ArrayIndexStarts.size() == NumCaptures);
     memcpy(getArrayIndexVars(), ArrayIndexVars.data(),
            sizeof(VarDecl *) * ArrayIndexVars.size());
@@ -999,14 +999,10 @@ LambdaExpr *LambdaExpr::Create(const ASTContext &Context,
   // Determine the type of the expression (i.e., the type of the
   // function object we're creating).
   QualType T = Context.getTypeDeclType(Class);
-
-  unsigned Size = sizeof(LambdaExpr) + sizeof(Stmt *) * (Captures.size() + 1);
-  if (!ArrayIndexVars.empty()) {
-    Size += sizeof(unsigned) * (Captures.size() + 1);
-    // Realign for following VarDecl array.
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<VarDecl*>());
-    Size += sizeof(VarDecl *) * ArrayIndexVars.size();
-  }
+  
+  unsigned Size = totalSizeToAlloc<Stmt *, VarDecl *, unsigned>(Captures.size() + 1,
+                                                                ArrayIndexVars.size(),
+                                                                ArrayIndexVars.size() ? Captures.size() + 1 : 0);
   void *Mem = Context.Allocate(Size);
   return new (Mem) LambdaExpr(T, IntroducerRange,
                               CaptureDefault, CaptureDefaultLoc, Captures,
@@ -1018,12 +1014,11 @@ LambdaExpr *LambdaExpr::Create(const ASTContext &Context,
 LambdaExpr *LambdaExpr::CreateDeserialized(const ASTContext &C,
                                            unsigned NumCaptures,
                                            unsigned NumArrayIndexVars) {
-  unsigned Size = sizeof(LambdaExpr) + sizeof(Stmt *) * (NumCaptures + 1);
-  if (NumArrayIndexVars)
-    Size += sizeof(VarDecl) * NumArrayIndexVars
-          + sizeof(unsigned) * (NumCaptures + 1);
+  unsigned Size = totalSizeToAlloc<Stmt *, VarDecl *, unsigned>(NumCaptures + 1,
+                                                                NumArrayIndexVars,
+                                                                NumArrayIndexVars ? NumCaptures + 1 : 0);
   void *Mem = C.Allocate(Size);
-  return new (Mem) LambdaExpr(EmptyShell(), NumCaptures, NumArrayIndexVars > 0);
+  return new (Mem) LambdaExpr(EmptyShell(), NumCaptures, NumArrayIndexVars);
 }
 
 bool LambdaExpr::isInitCapture(const LambdaCapture *C) const {
@@ -1071,7 +1066,7 @@ LambdaExpr::capture_range LambdaExpr::implicit_captures() const {
 
 ArrayRef<VarDecl *>
 LambdaExpr::getCaptureInitIndexVars(const_capture_init_iterator Iter) const {
-  assert(HasArrayIndexVars && "No array index-var data?");
+  assert(NumArrayIndexVars && "No array index-var data?");
   
   unsigned Index = Iter - capture_init_begin();
   assert(Index < getLambdaClass()->getLambdaData().NumCaptures &&
@@ -1105,7 +1100,7 @@ CompoundStmt *LambdaExpr::getBody() const {
     *const_cast<clang::Stmt **>(&getStoredStmts()[NumCaptures]) =
         getCallOperator()->getBody();
 
-  return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
+  return static_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
 }
 
 bool LambdaExpr::isMutable() const {
