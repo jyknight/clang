@@ -295,8 +295,12 @@ UnresolvedLookupExpr::Create(const ASTContext &C,
 {
   assert(Args || TemplateKWLoc.isValid());
   unsigned num_args = Args ? Args->size() : 0;
-  void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) +
-                         ASTTemplateKWAndArgsInfo::sizeFor(num_args));
+
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
+  Size += ASTTemplateKWAndArgsInfo::sizeFor(num_args);
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedLookupExpr>());
   return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc,
                                         TemplateKWLoc, NameInfo,
                                         ADL, /*Overload*/ true, Args,
@@ -307,11 +311,13 @@ UnresolvedLookupExpr *
 UnresolvedLookupExpr::CreateEmpty(const ASTContext &C,
                                   bool HasTemplateKWAndArgsInfo,
                                   unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(UnresolvedLookupExpr);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
   if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedLookupExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedLookupExpr>());
   UnresolvedLookupExpr *E = new (Mem) UnresolvedLookupExpr(EmptyShell());
   E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
   return E;
@@ -449,12 +455,14 @@ DependentScopeDeclRefExpr::Create(const ASTContext &C,
                                   const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
   assert(QualifierLoc && "should be created for dependent qualifiers");
-  std::size_t size = sizeof(DependentScopeDeclRefExpr);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
   if (Args)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(Args->size());
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(Args->size());
   else if (TemplateKWLoc.isValid())
-    size += ASTTemplateKWAndArgsInfo::sizeFor(0);
-  void *Mem = C.Allocate(size);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
+  void *Mem = C.Allocate(Size);
   return new (Mem) DependentScopeDeclRefExpr(C.DependentTy, QualifierLoc,
                                              TemplateKWLoc, NameInfo, Args);
 }
@@ -463,10 +471,12 @@ DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::CreateEmpty(const ASTContext &C,
                                        bool HasTemplateKWAndArgsInfo,
                                        unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(DependentScopeDeclRefExpr);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
   if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
-  void *Mem = C.Allocate(size);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+  void *Mem = C.Allocate(Size);
   DependentScopeDeclRefExpr *E
     = new (Mem) DependentScopeDeclRefExpr(QualType(), NestedNameSpecifierLoc(),
                                           SourceLocation(),
@@ -1122,9 +1132,7 @@ ExprWithCleanups::ExprWithCleanups(Expr *subexpr,
 
 ExprWithCleanups *ExprWithCleanups::Create(const ASTContext &C, Expr *subexpr,
                                            ArrayRef<CleanupObject> objects) {
-  size_t size = sizeof(ExprWithCleanups)
-              + objects.size() * sizeof(CleanupObject);
-  void *buffer = C.Allocate(size, llvm::alignOf<ExprWithCleanups>());
+  void *buffer = C.Allocate(totalSizeToAlloc<CleanupObject>(objects.size()), llvm::alignOf<ExprWithCleanups>());
   return new (buffer) ExprWithCleanups(subexpr, objects);
 }
 
@@ -1136,8 +1144,7 @@ ExprWithCleanups::ExprWithCleanups(EmptyShell empty, unsigned numObjects)
 ExprWithCleanups *ExprWithCleanups::Create(const ASTContext &C,
                                            EmptyShell empty,
                                            unsigned numObjects) {
-  size_t size = sizeof(ExprWithCleanups) + numObjects * sizeof(CleanupObject);
-  void *buffer = C.Allocate(size, llvm::alignOf<ExprWithCleanups>());
+  void *buffer = C.Allocate(totalSizeToAlloc<CleanupObject>(numObjects), llvm::alignOf<ExprWithCleanups>());
   return new (buffer) ExprWithCleanups(empty, numObjects);
 }
 
@@ -1157,7 +1164,7 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
     LParenLoc(LParenLoc),
     RParenLoc(RParenLoc),
     NumArgs(Args.size()) {
-  Stmt **StoredArgs = reinterpret_cast<Stmt **>(this + 1);
+  Expr **StoredArgs = getTrailingObjects<Expr *>();
   for (unsigned I = 0; I != Args.size(); ++I) {
     if (Args[I]->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
@@ -1172,16 +1179,14 @@ CXXUnresolvedConstructExpr::Create(const ASTContext &C,
                                    SourceLocation LParenLoc,
                                    ArrayRef<Expr*> Args,
                                    SourceLocation RParenLoc) {
-  void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
-                         sizeof(Expr *) * Args.size());
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(Args.size()));
   return new (Mem) CXXUnresolvedConstructExpr(Type, LParenLoc, Args, RParenLoc);
 }
 
 CXXUnresolvedConstructExpr *
 CXXUnresolvedConstructExpr::CreateEmpty(const ASTContext &C, unsigned NumArgs) {
   Stmt::EmptyShell Empty;
-  void *Mem = C.Allocate(sizeof(CXXUnresolvedConstructExpr) +
-                         sizeof(Expr *) * NumArgs);
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(NumArgs));
   return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
 }
 
@@ -1263,10 +1268,13 @@ CXXDependentScopeMemberExpr::Create(const ASTContext &C,
                                                MemberNameInfo);
 
   unsigned NumTemplateArgs = TemplateArgs ? TemplateArgs->size() : 0;
-  std::size_t size = sizeof(CXXDependentScopeMemberExpr)
-    + ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
+  Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   return new (Mem) CXXDependentScopeMemberExpr(C, Base, BaseType,
                                                IsArrow, OperatorLoc,
                                                QualifierLoc,
@@ -1285,9 +1293,11 @@ CXXDependentScopeMemberExpr::CreateEmpty(const ASTContext &C,
                                                NestedNameSpecifierLoc(),
                                                nullptr, DeclarationNameInfo());
 
-  std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
-                     ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
-  void *Mem = C.Allocate(size, llvm::alignOf<CXXDependentScopeMemberExpr>());
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
+  Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+  void *Mem = C.Allocate(Size, llvm::alignOf<CXXDependentScopeMemberExpr>());
   CXXDependentScopeMemberExpr *E
     =  new (Mem) CXXDependentScopeMemberExpr(C, nullptr, QualType(),
                                              0, SourceLocation(),
@@ -1369,13 +1379,15 @@ UnresolvedMemberExpr::Create(const ASTContext &C, bool HasUnresolvedUsing,
                              const TemplateArgumentListInfo *TemplateArgs,
                              UnresolvedSetIterator Begin, 
                              UnresolvedSetIterator End) {
-  std::size_t size = sizeof(UnresolvedMemberExpr);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
   if (TemplateArgs)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
   else if (TemplateKWLoc.isValid())
-    size += ASTTemplateKWAndArgsInfo::sizeFor(0);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedMemberExpr>());
   return new (Mem) UnresolvedMemberExpr(C, 
                              HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, QualifierLoc, TemplateKWLoc,
@@ -1386,11 +1398,13 @@ UnresolvedMemberExpr *
 UnresolvedMemberExpr::CreateEmpty(const ASTContext &C,
                                   bool HasTemplateKWAndArgsInfo,
                                   unsigned NumTemplateArgs) {
-  std::size_t size = sizeof(UnresolvedMemberExpr);
+  // totalSizeToAlloc can't include ASTTemplateKWAndArgsInfo because
+  // that, itself, is variable sized.
+  std::size_t Size = totalSizeToAlloc<ASTTemplateKWAndArgsInfo>(0);
   if (HasTemplateKWAndArgsInfo)
-    size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
 
-  void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
+  void *Mem = C.Allocate(Size, llvm::alignOf<UnresolvedMemberExpr>());
   UnresolvedMemberExpr *E = new (Mem) UnresolvedMemberExpr(EmptyShell());
   E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
   return E;
@@ -1432,16 +1446,14 @@ SizeOfPackExpr::Create(ASTContext &Context, SourceLocation OperatorLoc,
                        SourceLocation RParenLoc,
                        Optional<unsigned> Length,
                        ArrayRef<TemplateArgument> PartialArgs) {
-  void *Storage = Context.Allocate(
-      sizeof(SizeOfPackExpr) + sizeof(TemplateArgument) * PartialArgs.size());
+  void *Storage = Context.Allocate(totalSizeToAlloc<TemplateArgument>(PartialArgs.size()));
   return new (Storage) SizeOfPackExpr(Context.getSizeType(), OperatorLoc, Pack,
                                       PackLoc, RParenLoc, Length, PartialArgs);
 }
 
 SizeOfPackExpr *SizeOfPackExpr::CreateDeserialized(ASTContext &Context,
                                                    unsigned NumPartialArgs) {
-  void *Storage = Context.Allocate(
-      sizeof(SizeOfPackExpr) + sizeof(TemplateArgument) * NumPartialArgs);
+  void *Storage = Context.Allocate(totalSizeToAlloc<TemplateArgument>(NumPartialArgs));
   return new (Storage) SizeOfPackExpr(EmptyShell(), NumPartialArgs);
 }
 
@@ -1468,23 +1480,21 @@ FunctionParmPackExpr::FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,
       ParamPack(ParamPack), NameLoc(NameLoc), NumParameters(NumParams) {
   if (Params)
     std::uninitialized_copy(Params, Params + NumParams,
-                            reinterpret_cast<ParmVarDecl **>(this + 1));
+                            getTrailingObjects<ParmVarDecl *>());
 }
 
 FunctionParmPackExpr *
 FunctionParmPackExpr::Create(const ASTContext &Context, QualType T,
                              ParmVarDecl *ParamPack, SourceLocation NameLoc,
                              ArrayRef<ParmVarDecl *> Params) {
-  return new (Context.Allocate(sizeof(FunctionParmPackExpr) +
-                               sizeof(ParmVarDecl*) * Params.size()))
+  return new (Context.Allocate(totalSizeToAlloc<ParmVarDecl *>(Params.size())))
     FunctionParmPackExpr(T, ParamPack, NameLoc, Params.size(), Params.data());
 }
 
 FunctionParmPackExpr *
 FunctionParmPackExpr::CreateEmpty(const ASTContext &Context,
                                   unsigned NumParams) {
-  return new (Context.Allocate(sizeof(FunctionParmPackExpr) +
-                               sizeof(ParmVarDecl*) * NumParams))
+  return new (Context.Allocate(totalSizeToAlloc<ParmVarDecl *>(NumParams)))
     FunctionParmPackExpr(QualType(), nullptr, SourceLocation(), 0, nullptr);
 }
 
@@ -1542,15 +1552,13 @@ TypeTraitExpr *TypeTraitExpr::Create(const ASTContext &C, QualType T,
                                      ArrayRef<TypeSourceInfo *> Args,
                                      SourceLocation RParenLoc,
                                      bool Value) {
-  unsigned Size = sizeof(TypeTraitExpr) + sizeof(TypeSourceInfo*) * Args.size();
-  void *Mem = C.Allocate(Size);
+  void *Mem = C.Allocate(totalSizeToAlloc<TypeSourceInfo*>(Args.size()));
   return new (Mem) TypeTraitExpr(T, Loc, Kind, Args, RParenLoc, Value);
 }
 
 TypeTraitExpr *TypeTraitExpr::CreateDeserialized(const ASTContext &C,
                                                  unsigned NumArgs) {
-  unsigned Size = sizeof(TypeTraitExpr) + sizeof(TypeSourceInfo*) * NumArgs;
-  void *Mem = C.Allocate(Size);
+  void *Mem = C.Allocate(totalSizeToAlloc<TypeSourceInfo*>(NumArgs));
   return new (Mem) TypeTraitExpr(EmptyShell());
 }
 

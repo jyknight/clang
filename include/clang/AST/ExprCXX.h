@@ -942,7 +942,7 @@ public:
 /// This wraps up a function call argument that was created from the
 /// corresponding parameter's default argument, when the call did not
 /// explicitly supply arguments for all of the parameters.
-class CXXDefaultArgExpr : public Expr, llvm::TrailingObjects<PseudoObjectExpr, Expr *> {
+class CXXDefaultArgExpr final : public Expr, llvm::TrailingObjects<CXXDefaultArgExpr, Expr *> {
   friend TrailingObjects;
   /// \brief The parameter whose default is being used.
   ///
@@ -2219,7 +2219,13 @@ public:
 ///   __is_enum(std::string) == false
 ///   __is_trivially_constructible(vector<int>, int*, int*)
 /// \endcode
-class TypeTraitExpr : public Expr {
+class TypeTraitExpr final : public Expr, private llvm::TrailingObjects<TypeTraitExpr, TypeSourceInfo *> {
+  friend TrailingObjects;
+  
+  size_t numTrailingObjects(OverloadToken<TypeSourceInfo *>) const {
+    return getNumArgs();
+  }
+  
   /// \brief The location of the type trait keyword.
   SourceLocation Loc;
   
@@ -2238,12 +2244,12 @@ class TypeTraitExpr : public Expr {
 
   /// \brief Retrieve the argument types.
   TypeSourceInfo **getTypeSourceInfos() {
-    return reinterpret_cast<TypeSourceInfo **>(this+1);
+    return getTrailingObjects<TypeSourceInfo *>();
   }
   
   /// \brief Retrieve the argument types.
   TypeSourceInfo * const *getTypeSourceInfos() const {
-    return reinterpret_cast<TypeSourceInfo * const*>(this+1);
+    return getTrailingObjects<TypeSourceInfo *>();
   }
   
 public:
@@ -2447,7 +2453,7 @@ public:
 
 /// \brief A reference to an overloaded function set, either an
 /// \c UnresolvedLookupExpr or an \c UnresolvedMemberExpr.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) OverloadExpr : public Expr {
+class OverloadExpr : public Expr {
   /// \brief The common name of these declarations.
   DeclarationNameInfo NameInfo;
 
@@ -2642,7 +2648,7 @@ public:
 ///
 /// These never include UnresolvedUsingValueDecls, which are always class
 /// members and therefore appear only in UnresolvedMemberLookupExprs.
-class UnresolvedLookupExpr : public OverloadExpr {
+class UnresolvedLookupExpr final : public OverloadExpr, private llvm::TrailingObjects<UnresolvedLookupExpr, ASTTemplateKWAndArgsInfo> {
   /// True if these lookup results should be extended by
   /// argument-dependent lookup if this is the operand of a function
   /// call.
@@ -2678,6 +2684,8 @@ class UnresolvedLookupExpr : public OverloadExpr {
       RequiresADL(false), Overloaded(false), NamingClass(nullptr)
   {}
 
+  friend TrailingObjects;
+  friend class OverloadExpr;
   friend class ASTStmtReader;
 
 public:
@@ -2753,8 +2761,9 @@ public:
 /// qualifier (X<T>::) and the name of the entity being referenced
 /// ("value"). Such expressions will instantiate to a DeclRefExpr once the
 /// declaration can be found.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentScopeDeclRefExpr
-    : public Expr {
+class DependentScopeDeclRefExpr final
+  : public Expr, private llvm::TrailingObjects<DependentScopeDeclRefExpr, ASTTemplateKWAndArgsInfo> {
+  friend TrailingObjects;
   /// \brief The nested-name-specifier that qualifies this unresolved
   /// declaration name.
   NestedNameSpecifierLoc QualifierLoc;
@@ -2769,12 +2778,12 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentScopeDeclRefExpr
   /// \brief Return the optional template keyword and arguments info.
   ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
     if (!HasTemplateKWAndArgsInfo) return nullptr;
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>(this + 1);
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
   /// \brief Return the optional template keyword and arguments info.
   const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
-    return const_cast<DependentScopeDeclRefExpr*>(this)
-      ->getTemplateKWAndArgsInfo();
+    if (!HasTemplateKWAndArgsInfo) return nullptr;
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
 
   DependentScopeDeclRefExpr(QualType T,
@@ -2913,7 +2922,9 @@ public:
 /// This expression also tracks whether the sub-expression contains a
 /// potentially-evaluated block literal.  The lifetime of a block
 /// literal is the extent of the enclosing scope.
-class ExprWithCleanups : public Expr {
+class ExprWithCleanups final : public Expr, private llvm::TrailingObjects<ExprWithCleanups, BlockDecl *> {
+  friend TrailingObjects;
+
 public:
   /// The type of objects that are kept in the cleanup.
   /// It's useful to remember the set of blocks;  we could also
@@ -2928,10 +2939,10 @@ private:
   ExprWithCleanups(Expr *SubExpr, ArrayRef<CleanupObject> Objects);
 
   CleanupObject *getObjectsBuffer() {
-    return reinterpret_cast<CleanupObject*>(this + 1);
+    return getTrailingObjects<CleanupObject>();
   }
   const CleanupObject *getObjectsBuffer() const {
-    return reinterpret_cast<const CleanupObject*>(this + 1);
+    return getTrailingObjects<CleanupObject>();
   }
   friend class ASTStmtReader;
 
@@ -2995,7 +3006,9 @@ public:
 /// When the returned expression is instantiated, it may resolve to a
 /// constructor call, conversion function call, or some kind of type
 /// conversion.
-class CXXUnresolvedConstructExpr : public Expr {
+class CXXUnresolvedConstructExpr final : public Expr, private llvm::TrailingObjects<CXXUnresolvedConstructExpr, Expr *> {
+  friend TrailingObjects;
+
   /// \brief The type being constructed.
   TypeSourceInfo *Type;
 
@@ -3050,12 +3063,12 @@ public:
   unsigned arg_size() const { return NumArgs; }
 
   typedef Expr** arg_iterator;
-  arg_iterator arg_begin() { return reinterpret_cast<Expr**>(this + 1); }
+  arg_iterator arg_begin() { return getTrailingObjects<Expr *>(); }
   arg_iterator arg_end() { return arg_begin() + NumArgs; }
 
   typedef const Expr* const * const_arg_iterator;
   const_arg_iterator arg_begin() const {
-    return reinterpret_cast<const Expr* const *>(this + 1);
+    return getTrailingObjects<Expr *>();
   }
   const_arg_iterator arg_end() const {
     return arg_begin() + NumArgs;
@@ -3089,7 +3102,7 @@ public:
 
   // Iterators
   child_range children() {
-    Stmt **begin = reinterpret_cast<Stmt**>(this+1);
+    Stmt **begin = reinterpret_cast<Stmt**>(arg_begin());
     return child_range(begin, begin + NumArgs);
   }
 };
@@ -3101,8 +3114,10 @@ public:
 /// Like UnresolvedMemberExprs, these can be either implicit or
 /// explicit accesses.  It is only possible to get one of these with
 /// an implicit access if a qualifier is provided.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) CXXDependentScopeMemberExpr
-    : public Expr {
+class CXXDependentScopeMemberExpr final
+  : public Expr , private llvm::TrailingObjects<CXXDependentScopeMemberExpr, ASTTemplateKWAndArgsInfo> {
+  friend TrailingObjects;
+
   /// \brief The expression for the base pointer or class reference,
   /// e.g., the \c x in x.f.  Can be null in implicit accesses.
   Stmt *Base;
@@ -3143,7 +3158,7 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) CXXDependentScopeMemberExpr
   /// \brief Return the optional template keyword and arguments info.
   ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
     if (!HasTemplateKWAndArgsInfo) return nullptr;
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>(this + 1);
+    return getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   }
   /// \brief Return the optional template keyword and arguments info.
   const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
@@ -3353,8 +3368,8 @@ public:
 /// In the final AST, an explicit access always becomes a MemberExpr.
 /// An implicit access may become either a MemberExpr or a
 /// DeclRefExpr, depending on whether the member is static.
-class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) UnresolvedMemberExpr
-    : public OverloadExpr {
+class UnresolvedMemberExpr final
+  : public OverloadExpr, private llvm::TrailingObjects<UnresolvedMemberExpr, ASTTemplateKWAndArgsInfo> {
   /// \brief Whether this member expression used the '->' operator or
   /// the '.' operator.
   bool IsArrow : 1;
@@ -3388,6 +3403,8 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) UnresolvedMemberExpr
     : OverloadExpr(UnresolvedMemberExprClass, Empty), IsArrow(false),
       HasUnresolvedUsing(false), Base(nullptr) { }
 
+  friend TrailingObjects;
+  friend class OverloadExpr;
   friend class ASTStmtReader;
 
 public:
@@ -3482,12 +3499,11 @@ public:
 inline ASTTemplateKWAndArgsInfo *OverloadExpr::getTemplateKWAndArgsInfo() {
   if (!HasTemplateKWAndArgsInfo)
     return nullptr;
+
   if (isa<UnresolvedLookupExpr>(this))
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-        cast<UnresolvedLookupExpr>(this) + 1);
+    return cast<UnresolvedLookupExpr>(this)->getTrailingObjects<ASTTemplateKWAndArgsInfo>();
   else
-    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
-        cast<UnresolvedMemberExpr>(this) + 1);
+    return cast<UnresolvedMemberExpr>(this)->getTrailingObjects<ASTTemplateKWAndArgsInfo>();
 }
 
 /// \brief Represents a C++11 noexcept expression (C++ [expr.unary.noexcept]).
@@ -3621,7 +3637,8 @@ public:
 ///   static const unsigned value = sizeof...(Types);
 /// };
 /// \endcode
-class SizeOfPackExpr : public Expr {
+class SizeOfPackExpr final : public Expr, private llvm::TrailingObjects<SizeOfPackExpr, TemplateArgument> {
+  friend TrailingObjects;
   /// \brief The location of the \c sizeof keyword.
   SourceLocation OperatorLoc;
 
@@ -3662,7 +3679,7 @@ class SizeOfPackExpr : public Expr {
         Length(Length ? *Length : PartialArgs.size()), Pack(Pack) {
     assert((!Length || PartialArgs.empty()) &&
            "have partial args for non-dependent sizeof... expression");
-    TemplateArgument *Args = reinterpret_cast<TemplateArgument *>(this + 1);
+    TemplateArgument *Args = getTrailingObjects<TemplateArgument>();
     std::uninitialized_copy(PartialArgs.begin(), PartialArgs.end(), Args);
   }
 
@@ -3713,8 +3730,7 @@ public:
   /// \brief Get
   ArrayRef<TemplateArgument> getPartialArguments() const {
     assert(isPartiallySubstituted());
-    const TemplateArgument *Args =
-        reinterpret_cast<const TemplateArgument *>(this + 1);
+    const TemplateArgument *Args = getTrailingObjects<TemplateArgument>();
     return llvm::makeArrayRef(Args, Args + Length);
   }
 
@@ -3850,7 +3866,9 @@ public:
 /// };
 /// template struct S<int, int>;
 /// \endcode
-class FunctionParmPackExpr : public Expr {
+class FunctionParmPackExpr final : public Expr, private llvm::TrailingObjects<FunctionParmPackExpr, ParmVarDecl *> {
+  friend TrailingObjects;
+
   /// \brief The function parameter pack which was referenced.
   ParmVarDecl *ParamPack;
 
@@ -3884,7 +3902,7 @@ public:
   /// \brief Iterators over the parameters which the parameter pack expanded
   /// into.
   typedef ParmVarDecl * const *iterator;
-  iterator begin() const { return reinterpret_cast<iterator>(this+1); }
+  iterator begin() const { return getTrailingObjects<ParmVarDecl *>(); }
   iterator end() const { return begin() + NumParameters; }
 
   /// \brief Get the number of parameters in this parameter pack.

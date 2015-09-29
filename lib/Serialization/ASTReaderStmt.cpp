@@ -1581,7 +1581,7 @@ void ASTStmtReader::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   E->Pack = Reader.ReadDeclAs<NamedDecl>(F, Record, Idx);
   if (E->isPartiallySubstituted()) {
     assert(E->Length == NumPartialArgs);
-    for (auto *I = reinterpret_cast<TemplateArgument *>(E + 1),
+    for (auto *I = E->getTrailingObjects<TemplateArgument>(),
               *E = I + NumPartialArgs;
          I != E; ++I)
       new (I) TemplateArgument(Reader.ReadTemplateArgument(F, Record, Idx));
@@ -1616,7 +1616,7 @@ void ASTStmtReader::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
   E->NumParameters = Record[Idx++];
   E->ParamPack = ReadDeclAs<ParmVarDecl>(Record, Idx);
   E->NameLoc = ReadSourceLocation(Record, Idx);
-  ParmVarDecl **Parms = reinterpret_cast<ParmVarDecl**>(E+1);
+  ParmVarDecl **Parms = E->getTrailingObjects<ParmVarDecl *>();
   for (unsigned i = 0, n = E->NumParameters; i != n; ++i)
     Parms[i] = ReadDeclAs<ParmVarDecl>(Record, Idx);
 }
