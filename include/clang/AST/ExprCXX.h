@@ -942,7 +942,7 @@ public:
 /// This wraps up a function call argument that was created from the
 /// corresponding parameter's default argument, when the call did not
 /// explicitly supply arguments for all of the parameters.
-class CXXDefaultArgExpr final : public Expr, llvm::TrailingObjects<CXXDefaultArgExpr, Expr *> {
+class CXXDefaultArgExpr final : public Expr, private llvm::TrailingObjects<CXXDefaultArgExpr, Expr *> {
   friend TrailingObjects;
   /// \brief The parameter whose default is being used.
   ///
