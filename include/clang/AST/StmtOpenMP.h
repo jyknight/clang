@@ -64,14 +64,13 @@ protected:
   /// \param EndLoc Ending location of the directive.
   ///
   template <typename T>
-  OMPExecutableDirective(const T *, StmtClass SC, OpenMPDirectiveKind K,
+  OMPExecutableDirective(const T *obj, StmtClass SC, OpenMPDirectiveKind K,
                          SourceLocation StartLoc, SourceLocation EndLoc,
                          unsigned NumClauses, unsigned NumChildren)
       : Stmt(SC), Kind(K), StartLoc(std::move(StartLoc)),
         EndLoc(std::move(EndLoc)), NumClauses(NumClauses),
         NumChildren(NumChildren),
-        ClausesOffset(llvm::RoundUpToAlignment(sizeof(T),
-                                               llvm::alignOf<OMPClause *>())) {}
+        ClausesOffset(reinterpret_cast<const char *>(obj->template getTrailingObjects<OMPClause *>()) - reinterpret_cast<const char *>(obj)) {}
 
   /// \brief Sets the list of variables for this clause.
   ///
@@ -229,7 +228,9 @@ public:
 /// with the variables 'a' and 'b' and 'reduction' with operator '+' and
 /// variables 'c' and 'd'.
 ///
-class OMPParallelDirective : public OMPExecutableDirective {
+class OMPParallelDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPParallelDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief true if the construct has inner cancel directive.
   bool HasCancel;
@@ -705,7 +706,9 @@ public:
 /// with the variables 'a' and 'b', 'linear' with variables 'i', 'j' and
 /// linear step 's', 'reduction' with operator '+' and variables 'c' and 'd'.
 ///
-class OMPSimdDirective : public OMPLoopDirective {
+class OMPSimdDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPSimdDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -770,7 +773,9 @@ public:
 /// variables 'a' and 'b' and 'reduction' with operator '+' and variables 'c'
 /// and 'd'.
 ///
-class OMPForDirective : public OMPLoopDirective {
+class OMPForDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPForDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief true if current directive has inner cancel directive.
@@ -847,7 +852,9 @@ public:
 /// with the variables 'a' and 'b', 'linear' with variables 'i', 'j' and
 /// linear step 's', 'reduction' with operator '+' and variables 'c' and 'd'.
 ///
-class OMPForSimdDirective : public OMPLoopDirective {
+class OMPForSimdDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPForSimdDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -912,7 +919,9 @@ public:
 /// the variables 'a' and 'b' and 'reduction' with operator '+' and variables
 /// 'c' and 'd'.
 ///
-class OMPSectionsDirective : public OMPExecutableDirective {
+class OMPSectionsDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPSectionsDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief true if current directive has inner cancel directive.
@@ -980,7 +989,9 @@ public:
 /// #pragma omp section
 /// \endcode
 ///
-class OMPSectionDirective : public OMPExecutableDirective {
+class OMPSectionDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPSectionDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief true if current directive has inner cancel directive.
@@ -1042,7 +1053,9 @@ public:
 /// In this example directive '#pragma omp single' has clauses 'private' with
 /// the variables 'a' and 'b' and 'copyprivate' with variables 'c' and 'd'.
 ///
-class OMPSingleDirective : public OMPExecutableDirective {
+class OMPSingleDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPSingleDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1097,7 +1110,9 @@ public:
 /// #pragma omp master
 /// \endcode
 ///
-class OMPMasterDirective : public OMPExecutableDirective {
+class OMPMasterDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPMasterDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1144,7 +1159,9 @@ public:
 /// #pragma omp critical
 /// \endcode
 ///
-class OMPCriticalDirective : public OMPExecutableDirective {
+class OMPCriticalDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPCriticalDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Name of the directive.
   DeclarationNameInfo DirName;
@@ -1218,7 +1235,9 @@ public:
 /// with the variables 'a' and 'b' and 'reduction' with operator '+' and
 /// variables 'c' and 'd'.
 ///
-class OMPParallelForDirective : public OMPLoopDirective {
+class OMPParallelForDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPParallelForDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief true if current region has inner cancel directive.
@@ -1298,7 +1317,9 @@ public:
 /// and linear step 's', 'reduction' with operator '+' and variables 'c' and
 /// 'd'.
 ///
-class OMPParallelForSimdDirective : public OMPLoopDirective {
+class OMPParallelForSimdDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPParallelForSimdDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1366,7 +1387,9 @@ public:
 /// 'private' with the variables 'a' and 'b' and 'reduction' with operator '+'
 /// and variables 'c' and 'd'.
 ///
-class OMPParallelSectionsDirective : public OMPExecutableDirective {
+class OMPParallelSectionsDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPParallelSectionsDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief true if current directive has inner cancel directive.
@@ -1437,7 +1460,9 @@ public:
 /// In this example directive '#pragma omp task' has clauses 'private' with the
 /// variables 'a' and 'b' and 'final' with condition 'd'.
 ///
-class OMPTaskDirective : public OMPExecutableDirective {
+class OMPTaskDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTaskDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief true if this directive has inner cancel directive.
   bool HasCancel;
@@ -1505,8 +1530,12 @@ public:
 /// #pragma omp taskyield
 /// \endcode
 ///
-class OMPTaskyieldDirective : public OMPExecutableDirective {
+class OMPTaskyieldDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTaskyieldDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
+
+ public:
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1518,25 +1547,9 @@ class OMPTaskyieldDirective : public OMPExecutableDirective {
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPTaskyieldDirective()
+  explicit OMPTaskyieldDirective(EmptyShell)
       : OMPExecutableDirective(this, OMPTaskyieldDirectiveClass, OMPD_taskyield,
                                SourceLocation(), SourceLocation(), 0, 0) {}
-
-public:
-  /// \brief Creates directive.
-  ///
-  /// \param C AST context.
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending Location of the directive.
-  ///
-  static OMPTaskyieldDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
-
-  /// \brief Creates an empty directive.
-  ///
-  /// \param C AST context.
-  ///
-  static OMPTaskyieldDirective *CreateEmpty(const ASTContext &C, EmptyShell);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPTaskyieldDirectiveClass;
@@ -1549,8 +1562,12 @@ public:
 /// #pragma omp barrier
 /// \endcode
 ///
-class OMPBarrierDirective : public OMPExecutableDirective {
+class OMPBarrierDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPBarrierDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
+
+ public:
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1562,25 +1579,9 @@ class OMPBarrierDirective : public OMPExecutableDirective {
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPBarrierDirective()
+  explicit OMPBarrierDirective(EmptyShell)
       : OMPExecutableDirective(this, OMPBarrierDirectiveClass, OMPD_barrier,
                                SourceLocation(), SourceLocation(), 0, 0) {}
-
-public:
-  /// \brief Creates directive.
-  ///
-  /// \param C AST context.
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending Location of the directive.
-  ///
-  static OMPBarrierDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
-
-  /// \brief Creates an empty directive.
-  ///
-  /// \param C AST context.
-  ///
-  static OMPBarrierDirective *CreateEmpty(const ASTContext &C, EmptyShell);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPBarrierDirectiveClass;
@@ -1593,8 +1594,12 @@ public:
 /// #pragma omp taskwait
 /// \endcode
 ///
-class OMPTaskwaitDirective : public OMPExecutableDirective {
+class OMPTaskwaitDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTaskwaitDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
+
+ public:
   /// \brief Build directive with the given start and end location.
   ///
   /// \param StartLoc Starting location of the directive kind.
@@ -1606,25 +1611,9 @@ class OMPTaskwaitDirective : public OMPExecutableDirective {
 
   /// \brief Build an empty directive.
   ///
-  explicit OMPTaskwaitDirective()
+  explicit OMPTaskwaitDirective(EmptyShell)
       : OMPExecutableDirective(this, OMPTaskwaitDirectiveClass, OMPD_taskwait,
                                SourceLocation(), SourceLocation(), 0, 0) {}
-
-public:
-  /// \brief Creates directive.
-  ///
-  /// \param C AST context.
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending Location of the directive.
-  ///
-  static OMPTaskwaitDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
-
-  /// \brief Creates an empty directive.
-  ///
-  /// \param C AST context.
-  ///
-  static OMPTaskwaitDirective *CreateEmpty(const ASTContext &C, EmptyShell);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPTaskwaitDirectiveClass;
@@ -1637,7 +1626,9 @@ public:
 /// #pragma omp taskgroup
 /// \endcode
 ///
-class OMPTaskgroupDirective : public OMPExecutableDirective {
+class OMPTaskgroupDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTaskgroupDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1688,7 +1679,9 @@ public:
 /// 'omp flush' directive does not have clauses but have an optional list of
 /// variables to flush. This list of variables is stored within some fake clause
 /// FlushClause.
-class OMPFlushDirective : public OMPExecutableDirective {
+class OMPFlushDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPFlushDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1743,7 +1736,9 @@ public:
 /// #pragma omp ordered
 /// \endcode
 ///
-class OMPOrderedDirective : public OMPExecutableDirective {
+class OMPOrderedDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPOrderedDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1798,7 +1793,9 @@ public:
 /// \endcode
 /// In this example directive '#pragma omp atomic' has clause 'capture'.
 ///
-class OMPAtomicDirective : public OMPExecutableDirective {
+class OMPAtomicDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPAtomicDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Used for 'atomic update' or 'atomic capture' constructs. They may
   /// have atomic expressions of forms
@@ -1932,7 +1929,9 @@ public:
 /// In this example directive '#pragma omp target' has clause 'if' with
 /// condition 'a'.
 ///
-class OMPTargetDirective : public OMPExecutableDirective {
+class OMPTargetDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTargetDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -1990,7 +1989,9 @@ public:
 /// with the value '0', 'if' with condition 'a' and 'map' with array
 /// section 'b[:]'.
 ///
-class OMPTargetDataDirective : public OMPExecutableDirective {
+class OMPTargetDataDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTargetDataDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -2047,7 +2048,9 @@ public:
 /// In this example directive '#pragma omp teams' has clause 'if' with
 /// condition 'a'.
 ///
-class OMPTeamsDirective : public OMPExecutableDirective {
+class OMPTeamsDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPTeamsDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -2104,48 +2107,35 @@ public:
 /// \endcode
 ///
 /// In this example a cancellation point is created for innermost 'for' region.
-class OMPCancellationPointDirective : public OMPExecutableDirective {
+class OMPCancellationPointDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPCancellationPointDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   OpenMPDirectiveKind CancelRegion;
-  /// \brief Build directive with the given start and end location.
-  ///
-  /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending location of the directive.
-  ///
-  OMPCancellationPointDirective(SourceLocation StartLoc, SourceLocation EndLoc)
-      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
-                               OMPD_cancellation_point, StartLoc, EndLoc, 0, 0),
-        CancelRegion(OMPD_unknown) {}
-
-  /// \brief Build an empty directive.
-  ///
-  explicit OMPCancellationPointDirective()
-      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
-                               OMPD_cancellation_point, SourceLocation(),
-                               SourceLocation(), 0, 0),
-        CancelRegion(OMPD_unknown) {}
 
   /// \brief Set cancel region for current cancellation point.
   /// \param CR Cancellation region.
   void setCancelRegion(OpenMPDirectiveKind CR) { CancelRegion = CR; }
 
-public:
-  /// \brief Creates directive.
+ public:
+  /// \brief Build directive with the given start and end location.
   ///
-  /// \param C AST context.
   /// \param StartLoc Starting location of the directive kind.
-  /// \param EndLoc Ending Location of the directive.
+  /// \param EndLoc Ending location of the directive.
   ///
-  static OMPCancellationPointDirective *
-  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
-         OpenMPDirectiveKind CancelRegion);
+  OMPCancellationPointDirective(SourceLocation StartLoc, SourceLocation EndLoc, OpenMPDirectiveKind CancelRegion)
+      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
+                               OMPD_cancellation_point, StartLoc, EndLoc, 0, 0),
+        CancelRegion(CancelRegion) {
+  }
 
-  /// \brief Creates an empty directive.
+  /// \brief Build an empty directive.
   ///
-  /// \param C AST context.
-  ///
-  static OMPCancellationPointDirective *CreateEmpty(const ASTContext &C,
-                                                    EmptyShell);
+  explicit OMPCancellationPointDirective(EmptyShell)
+      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
+                               OMPD_cancellation_point, SourceLocation(),
+                               SourceLocation(), 0, 0),
+        CancelRegion(OMPD_unknown) {}
 
   /// \brief Get cancellation region for the current cancellation point.
   OpenMPDirectiveKind getCancelRegion() const { return CancelRegion; }
@@ -2162,7 +2152,9 @@ public:
 /// \endcode
 ///
 /// In this example a cancel is created for innermost 'for' region.
-class OMPCancelDirective : public OMPExecutableDirective {
+class OMPCancelDirective final : public OMPExecutableDirective, private llvm::TrailingObjects<OMPCancelDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   OpenMPDirectiveKind CancelRegion;
   /// \brief Build directive with the given start and end location.

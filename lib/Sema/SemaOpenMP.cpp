@@ -4537,17 +4537,17 @@ StmtResult Sema::ActOnOpenMPTaskDirective(ArrayRef<OMPClause *> Clauses,
 
 StmtResult Sema::ActOnOpenMPTaskyieldDirective(SourceLocation StartLoc,
                                                SourceLocation EndLoc) {
-  return OMPTaskyieldDirective::Create(Context, StartLoc, EndLoc);
+  return new (Context) OMPTaskyieldDirective(StartLoc, EndLoc);
 }
 
 StmtResult Sema::ActOnOpenMPBarrierDirective(SourceLocation StartLoc,
                                              SourceLocation EndLoc) {
-  return OMPBarrierDirective::Create(Context, StartLoc, EndLoc);
+  return new (Context) OMPBarrierDirective(StartLoc, EndLoc);
 }
 
 StmtResult Sema::ActOnOpenMPTaskwaitDirective(SourceLocation StartLoc,
                                               SourceLocation EndLoc) {
-  return OMPTaskwaitDirective::Create(Context, StartLoc, EndLoc);
+  return new (Context) OMPTaskwaitDirective(StartLoc, EndLoc);
 }
 
 StmtResult Sema::ActOnOpenMPTaskgroupDirective(Stmt *AStmt,
@@ -5405,8 +5405,8 @@ Sema::ActOnOpenMPCancellationPointDirective(SourceLocation StartLoc,
     Diag(StartLoc, diag::err_omp_parent_cancel_region_ordered) << 0;
     return StmtError();
   }
-  return OMPCancellationPointDirective::Create(Context, StartLoc, EndLoc,
-                                               CancelRegion);
+  return new (Context) OMPCancellationPointDirective(StartLoc, EndLoc,
+                                                     CancelRegion);
 }
 
 StmtResult Sema::ActOnOpenMPCancelDirective(ArrayRef<OMPClause *> Clauses,

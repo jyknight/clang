@@ -3031,15 +3031,15 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_OMP_TASKYIELD_DIRECTIVE:
-      S = OMPTaskyieldDirective::CreateEmpty(Context, Empty);
+      S = new (Context) OMPTaskyieldDirective(Empty);
       break;
 
     case STMT_OMP_BARRIER_DIRECTIVE:
-      S = OMPBarrierDirective::CreateEmpty(Context, Empty);
+      S = new (Context) OMPBarrierDirective(Empty);
       break;
 
     case STMT_OMP_TASKWAIT_DIRECTIVE:
-      S = OMPTaskwaitDirective::CreateEmpty(Context, Empty);
+      S = new (Context) OMPTaskwaitDirective(Empty);
       break;
 
     case STMT_OMP_TASKGROUP_DIRECTIVE:
@@ -3077,7 +3077,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_OMP_CANCELLATION_POINT_DIRECTIVE:
-      S = OMPCancellationPointDirective::CreateEmpty(Context, Empty);
+      S = new (Context) OMPCancellationPointDirective(Empty);
       break;
 
     case STMT_OMP_CANCEL_DIRECTIVE:
