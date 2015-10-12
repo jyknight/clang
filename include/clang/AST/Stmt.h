@@ -815,11 +815,12 @@ public:
 /// Represents an attribute applied to a statement. For example:
 ///   [[omp::for(...)]] for (...) { ... }
 ///
-class AttributedStmt : public Stmt {
+class AttributedStmt final : public Stmt, private llvm::TrailingObjects<AttributedStmt, Attr *> {
   Stmt *SubStmt;
   SourceLocation AttrLoc;
   unsigned NumAttrs;
 
+  friend TrailingObjects;
   friend class ASTStmtReader;
 
   AttributedStmt(SourceLocation Loc, ArrayRef<const Attr*> Attrs, Stmt *SubStmt)
@@ -834,11 +835,9 @@ class AttributedStmt : public Stmt {
   }
 
   const Attr *const *getAttrArrayPtr() const {
-    return reinterpret_cast<const Attr *const *>(this + 1);
+    return getTrailingObjects<Attr *>();
   }
-  const Attr **getAttrArrayPtr() {
-    return reinterpret_cast<const Attr **>(this + 1);
-  }
+  const Attr **getAttrArrayPtr() { return getTrailingObjects<Attr *>(); }
 
 public:
   static AttributedStmt *Create(const ASTContext &C, SourceLocation Loc,
@@ -1972,17 +1971,10 @@ public:
   }
 };
 
-/// \brief This captures a statement into a function. For example, the following
-/// pragma annotated compound statement can be represented as a CapturedStmt,
-/// and this compound statement is the body of an anonymous outlined function.
-/// @code
-/// #pragma omp parallel
-/// {
-///   compute();
-/// }
-/// @endcode
-class CapturedStmt : public Stmt {
-public:
+/// \brief Helper class for CapturedStmt.  Describes the capture of
+/// either a variable, or 'this', or variable-length array type.
+class CapturedStmt_Capture {
+ public:
   /// \brief The different capture forms: by 'this', by reference, capture for
   /// variable-length array type etc.
   enum VariableCaptureKind {
@@ -1992,64 +1984,75 @@ public:
     VCK_VLAType,
   };
 
-  /// \brief Describes the capture of either a variable, or 'this', or
-  /// variable-length array type.
-  class Capture {
-    llvm::PointerIntPair<VarDecl *, 2, VariableCaptureKind> VarAndKind;
-    SourceLocation Loc;
+ private:
+  llvm::PointerIntPair<VarDecl *, 2, VariableCaptureKind> VarAndKind;
+  SourceLocation Loc;
 
-  public:
-    /// \brief Create a new capture.
-    ///
-    /// \param Loc The source location associated with this capture.
-    ///
-    /// \param Kind The kind of capture (this, ByRef, ...).
-    ///
-    /// \param Var The variable being captured, or null if capturing this.
-    ///
-    Capture(SourceLocation Loc, VariableCaptureKind Kind,
-            VarDecl *Var = nullptr);
+ public:
+  /// \brief Create a new capture.
+  ///
+  /// \param Loc The source location associated with this capture.
+  ///
+  /// \param Kind The kind of capture (this, ByRef, ...).
+  ///
+  /// \param Var The variable being captured, or null if capturing this.
+  ///
+  CapturedStmt_Capture(SourceLocation Loc, VariableCaptureKind Kind,
+                       VarDecl *Var = nullptr);
 
-    /// \brief Determine the kind of capture.
-    VariableCaptureKind getCaptureKind() const { return VarAndKind.getInt(); }
+  /// \brief Determine the kind of capture.
+  VariableCaptureKind getCaptureKind() const { return VarAndKind.getInt(); }
 
-    /// \brief Retrieve the source location at which the variable or 'this' was
-    /// first used.
-    SourceLocation getLocation() const { return Loc; }
+  /// \brief Retrieve the source location at which the variable or 'this' was
+  /// first used.
+  SourceLocation getLocation() const { return Loc; }
 
-    /// \brief Determine whether this capture handles the C++ 'this' pointer.
-    bool capturesThis() const { return getCaptureKind() == VCK_This; }
+  /// \brief Determine whether this capture handles the C++ 'this' pointer.
+  bool capturesThis() const { return getCaptureKind() == VCK_This; }
 
-    /// \brief Determine whether this capture handles a variable (by reference).
-    bool capturesVariable() const { return getCaptureKind() == VCK_ByRef; }
+  /// \brief Determine whether this capture handles a variable (by reference).
+  bool capturesVariable() const { return getCaptureKind() == VCK_ByRef; }
 
-    /// \brief Determine whether this capture handles a variable by copy.
-    bool capturesVariableByCopy() const {
-      return getCaptureKind() == VCK_ByCopy;
-    }
+  /// \brief Determine whether this capture handles a variable by copy.
+  bool capturesVariableByCopy() const {
+    return getCaptureKind() == VCK_ByCopy;
+  }
 
-    /// \brief Determine whether this capture handles a variable-length array
-    /// type.
-    bool capturesVariableArrayType() const {
-      return getCaptureKind() == VCK_VLAType;
-    }
+  /// \brief Determine whether this capture handles a variable-length array
+  /// type.
+  bool capturesVariableArrayType() const {
+    return getCaptureKind() == VCK_VLAType;
+  }
 
-    /// \brief Retrieve the declaration of the variable being captured.
-    ///
-    /// This operation is only valid if this capture captures a variable.
-    VarDecl *getCapturedVar() const {
-      assert((capturesVariable() || capturesVariableByCopy()) &&
-             "No variable available for 'this' or VAT capture");
-      return VarAndKind.getPointer();
-    }
-    friend class ASTStmtReader;
-  };
+  /// \brief Retrieve the declaration of the variable being captured.
+  ///
+  /// This operation is only valid if this capture captures a variable.
+  VarDecl *getCapturedVar() const {
+    assert((capturesVariable() || capturesVariableByCopy()) &&
+           "No variable available for 'this' or VAT capture");
+    return VarAndKind.getPointer();
+  }
+  friend class ASTStmtReader;
+};
+
+/// \brief This captures a statement into a function. For example, the following
+/// pragma annotated compound statement can be represented as a CapturedStmt,
+/// and this compound statement is the body of an anonymous outlined function.
+/// @code
+/// #pragma omp parallel
+/// {
+///   compute();
+/// }
+/// @endcode
+class CapturedStmt final : public Stmt, private llvm::TrailingObjects<CapturedStmt, Stmt *, CapturedStmt_Capture> {
+public:
+  typedef CapturedStmt_Capture Capture;
 
 private:
   /// \brief The number of variable captured, including 'this'.
   unsigned NumCaptures;
 
-  /// \brief The pointer part is the implicit the outlined function and the 
+  /// \brief The pointer part is the implicit the outlined function and the
   /// int part is the captured region kind, 'CR_Default' etc.
   llvm::PointerIntPair<CapturedDecl *, 1, CapturedRegionKind> CapDeclAndKind;
 
@@ -2063,10 +2066,10 @@ private:
   /// \brief Construct an empty captured statement.
   CapturedStmt(EmptyShell Empty, unsigned NumCaptures);
 
-  Stmt **getStoredStmts() { return reinterpret_cast<Stmt **>(this + 1); }
+  Stmt **getStoredStmts() { return getTrailingObjects<Stmt *>(); }
 
   Stmt *const *getStoredStmts() const {
-    return reinterpret_cast<Stmt *const *>(this + 1);
+    return getTrailingObjects<Stmt *>();
   }
 
   Capture *getStoredCaptures() const;
@@ -2200,6 +2203,7 @@ public:
 
   child_range children();
 
+  friend TrailingObjects;
   friend class ASTStmtReader;
 };
 

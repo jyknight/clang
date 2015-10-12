@@ -314,7 +314,7 @@ AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
                                        ArrayRef<const Attr*> Attrs,
                                        Stmt *SubStmt) {
   assert(!Attrs.empty() && "Attrs should not be empty");
-  void *Mem = C.Allocate(sizeof(AttributedStmt) + sizeof(Attr *) * Attrs.size(),
+  void *Mem = C.Allocate(totalSizeToAlloc<Attr *>(Attrs.size()),
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(Loc, Attrs, SubStmt);
 }
@@ -322,7 +322,7 @@ AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
 AttributedStmt *AttributedStmt::CreateEmpty(const ASTContext &C,
                                             unsigned NumAttrs) {
   assert(NumAttrs > 0 && "NumAttrs should be greater than zero");
-  void *Mem = C.Allocate(sizeof(AttributedStmt) + sizeof(Attr *) * NumAttrs,
+  void *Mem = C.Allocate(totalSizeToAlloc<Attr *>(NumAttrs),
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }
@@ -945,8 +945,9 @@ SEHFinallyStmt* SEHFinallyStmt::Create(const ASTContext &C, SourceLocation Loc,
   return new(C)SEHFinallyStmt(Loc,Block);
 }
 
-CapturedStmt::Capture::Capture(SourceLocation Loc, VariableCaptureKind Kind,
-                               VarDecl *Var)
+CapturedStmt_Capture::CapturedStmt_Capture(SourceLocation Loc,
+                                           VariableCaptureKind Kind,
+                                           VarDecl *Var)
     : VarAndKind(Var, Kind), Loc(Loc) {
   switch (Kind) {
   case VCK_This:
@@ -1031,27 +1032,13 @@ CapturedStmt *CapturedStmt::Create(const ASTContext &Context, Stmt *S,
   //
   assert(CaptureInits.size() == Captures.size() && "wrong number of arguments");
 
-  unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (Captures.size() + 1);
-  if (!Captures.empty()) {
-    // Realign for the following Capture array.
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<Capture>());
-    Size += sizeof(Capture) * Captures.size();
-  }
-
-  void *Mem = Context.Allocate(Size);
+  void *Mem = Context.Allocate(totalSizeToAlloc<Stmt *, Capture>(Captures.size() + 1, Captures.size()));
   return new (Mem) CapturedStmt(S, Kind, Captures, CaptureInits, CD, RD);
 }
 
 CapturedStmt *CapturedStmt::CreateDeserialized(const ASTContext &Context,
                                                unsigned NumCaptures) {
-  unsigned Size = sizeof(CapturedStmt) + sizeof(Stmt *) * (NumCaptures + 1);
-  if (NumCaptures > 0) {
-    // Realign for the following Capture array.
-    Size = llvm::RoundUpToAlignment(Size, llvm::alignOf<Capture>());
-    Size += sizeof(Capture) * NumCaptures;
-  }
-
-  void *Mem = Context.Allocate(Size);
+  void *Mem = Context.Allocate(totalSizeToAlloc<Stmt *, Capture>(NumCaptures + 1, NumCaptures));
   return new (Mem) CapturedStmt(EmptyShell(), NumCaptures);
 }
 

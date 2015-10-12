@@ -3792,20 +3792,20 @@ static void buildCapturedStmtCaptureList(
 
     if (Cap->isThisCapture()) {
       Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
-                                               CapturedStmt::VCK_This));
+                                               CapturedStmt::Capture::VCK_This));
       CaptureInits.push_back(Cap->getInitExpr());
       continue;
     } else if (Cap->isVLATypeCapture()) {
       Captures.push_back(
-          CapturedStmt::Capture(Cap->getLocation(), CapturedStmt::VCK_VLAType));
+          CapturedStmt::Capture(Cap->getLocation(), CapturedStmt::Capture::VCK_VLAType));
       CaptureInits.push_back(nullptr);
       continue;
     }
 
     Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
                                              Cap->isReferenceCapture()
-                                                 ? CapturedStmt::VCK_ByRef
-                                                 : CapturedStmt::VCK_ByCopy,
+                                             ? CapturedStmt::Capture::VCK_ByRef
+                                             : CapturedStmt::Capture::VCK_ByCopy,
                                              Cap->getVariable()));
     CaptureInits.push_back(Cap->getInitExpr());
   }
