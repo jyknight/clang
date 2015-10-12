@@ -151,7 +151,8 @@ public:
 };
 
 /// \brief Represents Objective-C's \@try ... \@catch ... \@finally statement.
-class ObjCAtTryStmt : public Stmt {
+class ObjCAtTryStmt final : public Stmt, private llvm::TrailingObjects<ObjCAtTryStmt, Stmt *> {
+  friend TrailingObjects;
 private:
   // The location of the @ in the \@try.
   SourceLocation AtTryLoc;
@@ -167,9 +168,9 @@ private:
   /// The order of the statements in memory follows the order in the source,
   /// with the \@try body first, followed by the \@catch statements (if any)
   /// and, finally, the \@finally (if it exists).
-  Stmt **getStmts() { return reinterpret_cast<Stmt **> (this + 1); }
-  const Stmt* const *getStmts() const { 
-    return reinterpret_cast<const Stmt * const*> (this + 1); 
+  Stmt **getStmts() { return getTrailingObjects<Stmt *>(); }
+  const Stmt* const *getStmts() const {
+    return getTrailingObjects<Stmt *>();
   }
   
   ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt,

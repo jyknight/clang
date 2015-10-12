@@ -62,7 +62,9 @@ public:
 
 /// CXXTryStmt - A C++ try block, including all handlers.
 ///
-class CXXTryStmt : public Stmt {
+class CXXTryStmt final : public Stmt, private llvm::TrailingObjects<CXXTryStmt, Stmt *> {
+  friend TrailingObjects;
+
   SourceLocation TryLoc;
   unsigned NumHandlers;
 
@@ -72,10 +74,10 @@ class CXXTryStmt : public Stmt {
     : Stmt(CXXTryStmtClass), NumHandlers(numHandlers) { }
 
   Stmt const * const *getStmts() const {
-    return reinterpret_cast<Stmt const * const*>(this + 1);
+    return getTrailingObjects<Stmt *>();
   }
   Stmt **getStmts() {
-    return reinterpret_cast<Stmt **>(this + 1);
+    return getTrailingObjects<Stmt *>();
   }
 
 public:
