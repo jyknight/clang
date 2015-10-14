@@ -44,6 +44,12 @@ bool Decl::isOutOfLine() const {
   return !getLexicalDeclContext()->Equals(getDeclContext());
 }
 
+TypeSourceInfo *TypeSourceInfo::Create(const ASTContext &Context, QualType T, unsigned DataSize)
+{
+  void *Mem = Context.Allocate(totalSizeToAlloc<char>(DataSize), 8);
+  return new (Mem) TypeSourceInfo(T);
+}
+
 TranslationUnitDecl::TranslationUnitDecl(ASTContext &ctx)
     : Decl(TranslationUnit, nullptr, SourceLocation()),
       DeclContext(TranslationUnit), Ctx(ctx), AnonymousNamespace(nullptr) {

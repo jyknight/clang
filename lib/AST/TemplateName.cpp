@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -21,6 +22,11 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 using namespace llvm;
+
+OverloadedTemplateStorage *OverloadedTemplateStorage::Create(const ASTContext &Context, unsigned size) {
+  void *Mem = Context.Allocate(totalSizeToAlloc<FunctionTemplateDecl *>(size));
+  return new (Mem) OverloadedTemplateStorage(size);
+}
 
 TemplateArgument 
 SubstTemplateTemplateParmPackStorage::getArgumentPack() const {

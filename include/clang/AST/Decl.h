@@ -58,19 +58,22 @@ class VarTemplateDecl;
 /// TL.getStartLoc().print(OS, SrcMgr);
 /// @endcode
 ///
-class TypeSourceInfo {
+class TypeSourceInfo final : private llvm::TrailingObjects<TypeSourceInfo, char> {
+  friend TrailingObjects;
   QualType Ty;
   // Contains a memory block after the class, used for type source information,
   // allocated by ASTContext.
-  friend class ASTContext;
   TypeSourceInfo(QualType ty) : Ty(ty) { }
 public:
+
+  static TypeSourceInfo *Create(const ASTContext &Context, QualType T, unsigned DataSize);
+
   /// \brief Return the type wrapped by this type source info.
   QualType getType() const { return Ty; }
 
   /// \brief Return the TypeLoc wrapper for the type source info.
   TypeLoc getTypeLoc() const; // implemented in TypeLoc.h
-  
+
   /// \brief Override the type stored in this TypeSourceInfo. Use with caution!
   void overrideType(QualType T) { Ty = T; }
 };

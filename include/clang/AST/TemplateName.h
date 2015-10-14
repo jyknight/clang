@@ -17,6 +17,7 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/TrailingObjects.h"
 
 namespace clang {
   
@@ -89,21 +90,24 @@ public:
   
 /// \brief A structure for storing the information associated with an
 /// overloaded template name.
-class OverloadedTemplateStorage : public UncommonTemplateNameStorage {
+class OverloadedTemplateStorage final : public UncommonTemplateNameStorage, private llvm::TrailingObjects<OverloadedTemplateStorage, NamedDecl *> {
+  friend TrailingObjects;
   friend class ASTContext;
 
-  OverloadedTemplateStorage(unsigned size) 
+  OverloadedTemplateStorage(unsigned size)
     : UncommonTemplateNameStorage(Overloaded, size) { }
 
   NamedDecl **getStorage() {
-    return reinterpret_cast<NamedDecl **>(this + 1);
+    return getTrailingObjects<NamedDecl *>();
   }
   NamedDecl * const *getStorage() const {
-    return reinterpret_cast<NamedDecl *const *>(this + 1);
+    return getTrailingObjects<NamedDecl *>();
   }
 
 public:
   typedef NamedDecl *const *iterator;
+
+  static OverloadedTemplateStorage *Create(const ASTContext &Context, unsigned size);
 
   iterator begin() const { return getStorage(); }
   iterator end() const { return getStorage() + size(); }

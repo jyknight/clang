@@ -2107,10 +2107,7 @@ TypeSourceInfo *ASTContext::CreateTypeSourceInfo(QualType T,
     assert(DataSize == TypeLoc::getFullDataSizeForType(T) &&
            "incorrect data size provided to CreateTypeSourceInfo!");
 
-  TypeSourceInfo *TInfo =
-    (TypeSourceInfo*)BumpAlloc.Allocate(sizeof(TypeSourceInfo) + DataSize, 8);
-  new (TInfo) TypeSourceInfo(T);
-  return TInfo;
+  return TypeSourceInfo::Create(*this, T, DataSize);
 }
 
 TypeSourceInfo *ASTContext::getTrivialTypeSourceInfo(QualType T,
@@ -6437,9 +6434,7 @@ ASTContext::getOverloadedTemplateName(UnresolvedSetIterator Begin,
   unsigned size = End - Begin;
   assert(size > 1 && "set is not overloaded!");
 
-  void *memory = Allocate(sizeof(OverloadedTemplateStorage) +
-                          size * sizeof(FunctionTemplateDecl*));
-  OverloadedTemplateStorage *OT = new(memory) OverloadedTemplateStorage(size);
+  OverloadedTemplateStorage *OT = OverloadedTemplateStorage::Create(*this, size);
 
   NamedDecl **Storage = OT->getStorage();
   for (UnresolvedSetIterator I = Begin; I != End; ++I) {
