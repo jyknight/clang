@@ -2219,7 +2219,9 @@ public:
 /// with the variables 'a' and 'b', 'grainsize' with expression 'val' and
 /// 'num_tasks' with expression 'num'.
 ///
-class OMPTaskLoopDirective : public OMPLoopDirective {
+class OMPTaskLoopDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPTaskLoopDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -2284,7 +2286,9 @@ public:
 /// with the variables 'a' and 'b', 'grainsize' with expression 'val' and
 /// 'num_tasks' with expression 'num'.
 ///
-class OMPTaskLoopSimdDirective : public OMPLoopDirective {
+class OMPTaskLoopSimdDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPTaskLoopSimdDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
   /// \brief Build directive with the given start and end location.
   ///
@@ -2350,7 +2354,9 @@ public:
 /// In this example directive '#pragma omp distribute' has clauses 'private'
 /// with the variables 'a' and 'b'
 ///
-class OMPDistributeDirective : public OMPLoopDirective {
+class OMPDistributeDirective final : public OMPLoopDirective, private llvm::TrailingObjects<OMPDistributeDirective, OMPClause *, Stmt *> {
+  friend TrailingObjects;
+  friend class OMPExecutableDirective;
   friend class ASTStmtReader;
 
   /// \brief Build directive with the given start and end location.
