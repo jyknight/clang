@@ -314,7 +314,7 @@ AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
                                        ArrayRef<const Attr*> Attrs,
                                        Stmt *SubStmt) {
   assert(!Attrs.empty() && "Attrs should not be empty");
-  void *Mem = C.Allocate(totalSizeToAlloc<Attr *>(Attrs.size()),
+  void *Mem = C.Allocate(totalSizeToAlloc<const Attr *>(Attrs.size()),
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(Loc, Attrs, SubStmt);
 }
@@ -322,7 +322,7 @@ AttributedStmt *AttributedStmt::Create(const ASTContext &C, SourceLocation Loc,
 AttributedStmt *AttributedStmt::CreateEmpty(const ASTContext &C,
                                             unsigned NumAttrs) {
   assert(NumAttrs > 0 && "NumAttrs should be greater than zero");
-  void *Mem = C.Allocate(totalSizeToAlloc<Attr *>(NumAttrs),
+  void *Mem = C.Allocate(totalSizeToAlloc<const Attr *>(NumAttrs),
                          llvm::alignOf<AttributedStmt>());
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }
