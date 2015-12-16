@@ -2638,7 +2638,9 @@ public:
 /// In this example directive '#pragma omp target' has clause 'map'
 /// with the variables 'a' and 'b'.
 ///
-class OMPMapClause : public OMPVarListClause<OMPMapClause> {
+class OMPMapClause final : public OMPVarListClause<OMPMapClause>, private llvm::TrailingObjects<OMPMapClause, Expr *> {
+  friend TrailingObjects;
+  friend class OMPVarListClause;
   friend class OMPClauseReader;
 
   /// \brief Map type modifier for the 'map' clause.
