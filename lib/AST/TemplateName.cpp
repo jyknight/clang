@@ -24,7 +24,7 @@ using namespace clang;
 using namespace llvm;
 
 OverloadedTemplateStorage *OverloadedTemplateStorage::Create(const ASTContext &Context, unsigned size) {
-  void *Mem = Context.Allocate(totalSizeToAlloc<FunctionTemplateDecl *>(size));
+  void *Mem = Context.Allocate(totalSizeToAlloc<NamedDecl *>(size));
   return new (Mem) OverloadedTemplateStorage(size);
 }
 
